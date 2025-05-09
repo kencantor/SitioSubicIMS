@@ -30,8 +30,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 // Configure cookie options for login and access denial
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.LoginPath = "/Identity/Account/Login"; // Correct path for Identity scaffolded pages
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied"; // Optional
 });
 
 // Add Razor Pages for Identity views
@@ -62,15 +62,16 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Ensure the authentication and authorization middleware is set correctly
 app.UseAuthentication();  // Enable authentication
 app.UseAuthorization();   // Enable authorization
 
-// Configure the route for MVC controllers
+// Default route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
 // Map Razor Pages for Identity
-app.MapRazorPages();
+app.MapRazorPages();  // Map Razor Pages for Identity-related pages
 
 app.Run();
