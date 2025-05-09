@@ -28,9 +28,13 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        @* <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3"> *@
+        <nav class="navbar navbar-expand-sm navbar-dark text-white m-0 mb-2 p-0 btn-primary">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Dashboard" asp-action="Index">SitioSubicIMS</a>
+                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Dashboard" asp-action="Index">
+                    <img src="~/images/logo.png" alt="Logo" class="img-fluid d-block d-sm-none" style="height:60px;width: 100%;" />
+                    <img src="~/images/logo.png" alt="Logo" class="d-none d-sm-block" style="height: 60px; width: 100%;" />
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -38,7 +42,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                            <a class="nav-link text-light" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
                         </li>
                         <!-- Add more navigation items here -->
                     </ul>
@@ -47,23 +51,23 @@
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">
+                                <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Manage/Index">
                                     Hello, @formattedName!
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <form method="post" asp-area="Identity" asp-page="/Account/Logout" id="logoutForm">
-                                    <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+                                    <button type="submit" class="nav-link btn btn-link text-light">Logout</button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                                <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Login">Login</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                                <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Register">Register</a>
                             </li>
                         }
                     </ul>
@@ -80,7 +84,7 @@
 
     <footer class="border-top footer text-muted mt-3">
         <div class="container">
-            &copy; 2025 - SitioSubicIMS
+            &copy; 2025 - Sitio Subic Waterworks IMS
         </div>
     </footer>
 
