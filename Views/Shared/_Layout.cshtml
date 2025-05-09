@@ -3,6 +3,19 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
+@{
+    string formattedName = null;
+    if (SignInManager.IsSignedIn(User))
+    {
+        var appUser = await UserManager.GetUserAsync(User);
+        if (appUser != null)
+        {
+            var firstName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(appUser.FirstName?.ToLower() ?? "");
+            formattedName = $"{firstName}";
+        }
+    }
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,13 +47,14 @@
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">Hello, @User.Identity?.Name!</a>
+                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">
+                                    Hello, @formattedName!
+                                </a>
                             </li>
                             <li class="nav-item">
                                 <form method="post" asp-area="Identity" asp-page="/Account/Logout" id="logoutForm">
                                     <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
                                 </form>
-
                             </li>
                         }
                         else
