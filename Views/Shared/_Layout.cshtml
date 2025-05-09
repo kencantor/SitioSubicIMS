@@ -37,9 +37,10 @@
                                 <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">Hello, @User.Identity?.Name!</a>
                             </li>
                             <li class="nav-item">
-                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" id="logoutForm" class="form-inline">
+                                <form method="post" asp-area="Identity" asp-page="/Account/Logout" id="logoutForm">
                                     <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
                                 </form>
+
                             </li>
                         }
                         else
