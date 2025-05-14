@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using SitioSubicIMS.Web.Models;
+using SitioSubicIMS.Web.Services.Logging;
 
 namespace SitioSubicIMS.Web.Areas.Identity.Pages.Account
 {
@@ -14,14 +15,14 @@ namespace SitioSubicIMS.Web.Areas.Identity.Pages.Account
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly IAuditLogger _auditLogger;
         public LoginModel(
-            SignInManager<ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager, // Inject here
-            ILogger<LoginModel> logger)
+            SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<LoginModel> logger, IAuditLogger auditLogger)
         {
             _signInManager = signInManager;
             _userManager = userManager; // Assign here
             _logger = logger;
+            _auditLogger = auditLogger;
         }
 
         [BindProperty]
@@ -71,18 +72,21 @@ namespace SitioSubicIMS.Web.Areas.Identity.Pages.Account
                 {
                     // If the user is deactivated, prevent login and display an error
                     ModelState.AddModelError(string.Empty, "Your account is deactivated. Please contact support.");
+                    await _auditLogger.LogAsync("Login Blocked", "Account is deactivated.", user.Email);
                     return RedirectToPage("./Deactivated");
                 }
                 if (user != null && user.IsLocked)
                 {
                     // If the user is locked, prevent login and display an error
                     ModelState.AddModelError(string.Empty, "Your account is locked. Please contact support.");
+                    await _auditLogger.LogAsync("Login Blocked", "Account is locked.", user.Email);
                     return RedirectToPage("./Lockout");
                 }
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+                    await _auditLogger.LogAsync("Login", $"{user.UserName} successfully logged in.", user.Email);
                     return LocalRedirect(ReturnUrl);
                 }
                 if (result.RequiresTwoFactor)

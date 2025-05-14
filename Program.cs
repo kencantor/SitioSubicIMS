@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using SitioSubicIMS.Web.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using SitioSubicIMS.Web.Services;
+using SitioSubicIMS.Web.Services.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Add Razor Pages for Identity views
 builder.Services.AddRazorPages();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IAuditLogger, AuditLogger>();
 
 var app = builder.Build();
 
