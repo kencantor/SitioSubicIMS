@@ -1,0 +1,213 @@
+﻿@model IEnumerable<SitioSubicIMS.Web.Models.ViewModels.UserViewModel>
+@{
+    ViewData["Title"] = "System Users";
+    var allRoles = ViewBag.AllRoles as List<string>;
+}
+
+<h4 class="mb-3">System Users</h4>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="input-group w-50">
+        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Search by name, username, or email..." />
+    </div>
+
+    <div class="ms-3">
+        <select id="roleFilter" class="form-select">
+            <option value="">All Roles</option>
+            @foreach (var role in allRoles)
+            {
+                <option value="@role">@role</option>
+            }
+        </select>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle table-sm custom-user-table">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr class="@(user.IsActive ? "" : "table-secondary")">
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>
+                        <form asp-action="AssignRole" asp-controller="SystemUsers" method="post" class="d-flex align-items-center">
+                            <input type="hidden" name="UserId" value="@user.Id" />
+                            <select name="NewRole" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                                @foreach (var role in allRoles)
+                                {
+                                    <option value="@role" selected="@(user.Role == role ? "selected" : null)">@role</option>
+                                }
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        @if (!user.IsActive)
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                        else if (user.IsLocked)
+                        {
+                            <span class="badge bg-danger">Locked</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        <form asp-controller="SystemUsers" asp-action="ToggleLock" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-@(user.IsLocked ? "success" : "warning")" title="@(user.IsLocked ? "Unlock" : "Lock")">
+                                <i class="bi bi-@(user.IsLocked ? "unlock" : "lock")"></i>
+                            </button>
+                        </form>
+
+                        <form asp-controller="SystemUsers" asp-action="ToggleActive" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-@(user.IsActive ? "danger" : "success")" title="@(user.IsActive ? "Deactivate" : "Reactivate")">
+                                <i class="bi bi-@(user.IsActive ? "person-x text-danger" : "person-check text-success")"></i>
+                                @(user.IsActive ? "Deactivate" : "Reactivate")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <small id="paginationInfo" class="text-muted"></small>
+        <nav>
+            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+        </nav>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const roleFilter = document.getElementById('roleFilter');
+        const rows = Array.from(document.querySelectorAll('tbody tr'));
+        const pagination = document.createElement('ul');
+        pagination.className = 'pagination justify-content-center mt-3';
+
+        const paginationInfo = document.createElement('div');
+        paginationInfo.className = 'text-center mt-2 text-muted small';
+
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        // Inject pagination and info after the table
+        const tableContainer = document.querySelector('.table-responsive');
+        tableContainer.insertAdjacentElement('afterend', pagination);
+        tableContainer.insertAdjacentElement('afterend', paginationInfo);
+
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedRole = roleFilter.value;
+
+            rows.forEach(row => {
+                const name = row.children[0].textContent.toLowerCase();
+                const username = row.children[1].textContent.toLowerCase();
+                const email = row.children[2].textContent.toLowerCase();
+                const role = row.querySelector('select[name="NewRole"]')?.value;
+
+                const matchesSearch = name.includes(searchTerm) || username.includes(searchTerm) || email.includes(searchTerm);
+                const matchesRole = !selectedRole || role === selectedRole;
+
+                row.dataset.visible = (matchesSearch && matchesRole).toString();
+            });
+
+            currentPage = 1;
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const visibleRows = rows.filter(row => row.dataset.visible === "true");
+            const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+
+            // Show only rows for the current page
+            rows.forEach((row, index) => {
+                if (row.dataset.visible === "true") {
+                    const visibleIndex = visibleRows.indexOf(row);
+                    row.style.display = (visibleIndex >= (currentPage - 1) * rowsPerPage && visibleIndex < currentPage * rowsPerPage) ? "" : "none";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            pagination.innerHTML = '';
+
+            if (totalPages === 0) return;
+
+            // Create page item helper
+            const createPageItem = (page, text = null, isActive = false, isDisabled = false) => {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+                li.innerHTML = `<a class="page-link" href="#">${text || page}</a>`;
+                if (!isDisabled) {
+                    li.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = page;
+                        updatePagination();
+                    });
+                }
+                return li;
+            };
+
+            // Previous button
+            pagination.appendChild(createPageItem(currentPage - 1, 'Previous', false, currentPage === 1));
+
+            const maxPagesToShow = 5;
+
+            if (totalPages <= maxPagesToShow + 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pagination.appendChild(createPageItem(i, null, i === currentPage));
+                }
+            } else {
+                pagination.appendChild(createPageItem(1, '1', currentPage === 1));
+
+                if (currentPage > 3) {
+                    pagination.appendChild(createPageItem(null, '...', false, true));
+                }
+
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                for (let i = start; i <= end; i++) {
+                    pagination.appendChild(createPageItem(i, null, i === currentPage));
+                }
+
+                if (currentPage < totalPages - 2) {
+                    pagination.appendChild(createPageItem(null, '...', false, true));
+                }
+
+                pagination.appendChild(createPageItem(totalPages, totalPages.toString(), currentPage === totalPages));
+            }
+
+            // Next button
+            pagination.appendChild(createPageItem(currentPage + 1, 'Next', false, currentPage === totalPages));
+
+            // Info text
+            const startItem = (currentPage - 1) * rowsPerPage + 1;
+            const endItem = Math.min(currentPage * rowsPerPage, visibleRows.length);
+            paginationInfo.textContent = visibleRows.length > 0
+                ? `Showing ${startItem} to ${endItem} of ${visibleRows.length} users`
+                : `No users found.`;
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        roleFilter.addEventListener('change', filterTable);
+
+        // Initial mark for all rows
+        rows.forEach(row => row.dataset.visible = "true");
+        updatePagination();
+    });
+</script>

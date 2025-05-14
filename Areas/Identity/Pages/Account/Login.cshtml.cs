@@ -12,11 +12,15 @@ namespace SitioSubicIMS.Web.Areas.Identity.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<LoginModel> _logger;
-
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager, // Inject here
+            ILogger<LoginModel> logger)
         {
             _signInManager = signInManager;
+            _userManager = userManager; // Assign here
             _logger = logger;
         }
 
@@ -61,6 +65,20 @@ namespace SitioSubicIMS.Web.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                // Find the user by email
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user != null && !user.IsActive)
+                {
+                    // If the user is deactivated, prevent login and display an error
+                    ModelState.AddModelError(string.Empty, "Your account is deactivated. Please contact support.");
+                    return RedirectToPage("./Deactivated");
+                }
+                if (user != null && user.IsLocked)
+                {
+                    // If the user is locked, prevent login and display an error
+                    ModelState.AddModelError(string.Empty, "Your account is locked. Please contact support.");
+                    return RedirectToPage("./Lockout");
+                }
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {

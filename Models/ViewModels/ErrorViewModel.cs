@@ -1,4 +1,4 @@
-namespace SitioSubicIMS.Web.Models
+namespace SitioSubicIMS.Web.Models.ViewModels
 {
     public class ErrorViewModel
     {

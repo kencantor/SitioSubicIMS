@@ -1,24 +1,24 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 .module-tile {
@@ -57,3 +57,35 @@ body {
 .module-tile:active {
     transform: scale(0.95);
 }
+
+.custom-user-table {
+    font-size: 0.9rem; /* smaller text */
+    border: 1px solid #d3d3d3; /* light gray border */
+}
+
+    .custom-user-table th,
+    .custom-user-table td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+        border: 1px solid #d3d3d3; /* light gray for all cells */
+    }
+
+    .custom-user-table th {
+        background-color: #3e78a3; /* light blue header */
+    }
+
+    .custom-user-table td select {
+        font-size: 0.8rem;
+    }
+
+    .custom-user-table .form-select-sm {
+        padding-top: 0.1rem;
+        padding-bottom: 0.1rem;
+    }
+
+    /* Optional soft row hover */
+    .custom-user-table tbody tr:hover {
+        background-color: #f9f9f9;
+    }

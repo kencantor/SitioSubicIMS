@@ -13,6 +13,7 @@ namespace SitioSubicIMS.Web.Models
         public string Address { get; set; }
         public DateTime? LastModifiedDate { get; set; } // Nullable in case it hasn't been modified
         public string ModifiedBy { get; set; } // Who modified the record
-        public bool IsActive { get; set; } // Active status for the user
+        public bool IsLocked { get; set; } = false;
+        public bool IsActive { get; set; } = true;// Active status for the user
     }
 }
