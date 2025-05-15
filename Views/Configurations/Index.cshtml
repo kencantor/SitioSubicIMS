@@ -1,0 +1,165 @@
+﻿@model SitioSubicIMS.Web.Models.ViewModels.ConfigurationViewModel
+
+@{
+    ViewData["Title"] = "Configuration Settings";
+    int pageSize = 10;
+}
+
+<h2>@ViewData["Title"]</h2>
+<div class="card mb-4">
+    <div class="card-header">Update Active Configuration</div>
+    <div class="card-body">
+        <form asp-action="Update" method="post" novalidate>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.PricePerCubicMeter" class="form-control" step="0.01" placeholder="Price per cubic meter" />
+                        <label asp-for="Latest.PricePerCubicMeter">Price per cubic meter</label>
+                        <span asp-validation-for="Latest.PricePerCubicMeter" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.MinimumConsumption" class="form-control" step="1" placeholder="Minimum consumption" />
+                        <label asp-for="Latest.MinimumConsumption">Minimum consumption</label>
+                        <span asp-validation-for="Latest.MinimumConsumption" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.MinimumCharge" class="form-control" step="0.01" placeholder="Minimum charge" />
+                        <label asp-for="Latest.MinimumCharge">Minimum charge</label>
+                        <span asp-validation-for="Latest.MinimumCharge" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.PenaltyRate" class="form-control" step="0.01" placeholder="Penalty rate" />
+                        <label asp-for="Latest.PenaltyRate">Penalty rate (%)</label>
+                        <span asp-validation-for="Latest.PenaltyRate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.VATRate" class="form-control" step="0.01" placeholder="VAT rate" />
+                        <label asp-for="Latest.VATRate">VAT rate (%)</label>
+                        <span asp-validation-for="Latest.VATRate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Configuration History</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle table-sm custom-user-table" id="configTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th hidden>#</th>
+                        <th>Date Created</th>
+                        <th>Price / Cubic Meter</th>
+                        <th>Minimum Consumption</th>
+                        <th>Minimum Charge</th>
+                        <th>Penalty Rate (%)</th>
+                        <th>VAT Rate (%)</th>
+                        <th>Created By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Configurations != null && Model.Configurations.Any())
+                    {
+                        int count = 1;
+                        foreach (var c in Model.Configurations)
+                        {
+                            <tr>
+                                <td hidden>@count</td>
+                                <td>@c.DateCreated.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@c.PricePerCubicMeter.ToString("F2")</td>
+                                <td>@c.MinimumConsumption</td>
+                                <td>@c.MinimumCharge.ToString("F2")</td>
+                                <td>@c.PenaltyRate.ToString("F2")</td>
+                                <td>@c.VATRate.ToString("F2")</td>
+                                <td>@c.CreatedBy</td>
+                                <td>
+                                    @if (c.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                            </tr>
+                            count++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center">No configuration records found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination script if you want -->
+        <script>
+            const rowsPerPage = @pageSize;
+            const table = document.getElementById('configTable');
+            let currentPage = 1;
+            const rows = table.tBodies[0].rows;
+            const totalPages = Math.ceil(rows.length / rowsPerPage);
+
+            function showPage(page) {
+                currentPage = page;
+                const start = (page - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                for (let i = 0; i < rows.length; i++) {
+                    rows[i].style.display = (i >= start && i < end) ? '' : 'none';
+                }
+                updatePagination();
+            }
+
+            function updatePagination() {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i;
+                    btn.classList.add('btn', 'btn-sm', 'me-1');
+                    if (i === currentPage) btn.classList.add('btn-primary');
+                    else btn.classList.add('btn-outline-primary');
+                    btn.addEventListener('click', () => showPage(i));
+                    pagination.appendChild(btn);
+                }
+            }
+
+            if (totalPages > 1) {
+                const paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination';
+                paginationContainer.className = 'mt-3';
+                table.parentNode.appendChild(paginationContainer);
+                showPage(1);
+            }
+        </script>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -13,6 +13,7 @@ namespace SitioSubicIMS.Web.Data
 
         // Add your DbSets here (e.g., public DbSet<Consumer> Consumers { get; set; })
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Configuration> Configurations { get; set; }
 
     }
 }
