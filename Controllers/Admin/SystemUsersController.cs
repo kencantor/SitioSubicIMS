@@ -28,6 +28,8 @@ namespace SitioSubicIMS.Web.Controllers.Admin
 
         public async Task<IActionResult> Index()
         {
+            var userViewModels = new List<UserViewModel>();
+
             try
             {
                 var users = _userManager.Users
@@ -36,8 +38,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                     .ThenBy(u => u.FirstName)
                     .AsNoTracking()
                     .ToList();
-
-                var userViewModels = new List<UserViewModel>();
 
                 foreach (var user in users)
                 {
@@ -57,20 +57,22 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 }
 
                 ViewBag.AllRoles = _roleManager.Roles.Select(r => r.Name).ToList();
-                return View(userViewModels);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = "An error occurred while loading the users list.";
-                await LogWithCatch("System User", "Failed to load users.", ex);
-                return View(new List<UserViewModel>());
+                TempData["Error"] = "An error occurred while loading users.";
+                await _auditLogger.LogAsync("System User", $"Failed to load user list: {ex.Message}", User.Identity.Name ?? "N/A");
             }
+
+            return View(userViewModels);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleLock(string id)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
             try
             {
                 var user = await _userManager.FindByIdAsync(id);
@@ -87,16 +89,16 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 user.ModifiedBy = User.Identity.Name;
 
                 await _userManager.UpdateAsync(user);
-
                 var fullName = await GetFullName(id);
-                TempData["Message"] = $"{fullName}'s account has been {(user.IsLocked ? "locked" : "unlocked")}.";
 
-                await _auditLogger.LogAsync("System User", TempData["Message"].ToString(), User.Identity.Name ?? "N/A");
+                string message = $"{fullName}'s account has been {(user.IsLocked ? "locked" : "unlocked")}.";
+                TempData["Message"] = message;
+                await _auditLogger.LogAsync("System User", message, User.Identity.Name ?? "N/A");
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "An error occurred while locking/unlocking the account.";
-                await LogWithCatch("System User", "Failed to toggle lock.", ex);
+                await _auditLogger.LogAsync("System User", $"ToggleLock failed: {ex.Message}", User.Identity.Name ?? "N/A");
             }
 
             return RedirectToAction("Index");
@@ -106,6 +108,8 @@ namespace SitioSubicIMS.Web.Controllers.Admin
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(string id)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest();
+
             try
             {
                 var user = await _userManager.FindByIdAsync(id);
@@ -122,16 +126,16 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 user.ModifiedBy = User.Identity.Name;
 
                 await _userManager.UpdateAsync(user);
-
                 var fullName = await GetFullName(id);
-                TempData["Message"] = $"{fullName}'s account has been {(user.IsActive ? "reactivated" : "deactivated")}.";
 
-                await _auditLogger.LogAsync("System User", TempData["Message"].ToString(), User.Identity.Name ?? "N/A");
+                string message = $"{fullName}'s account has been {(user.IsActive ? "reactivated" : "deactivated")}.";
+                TempData["Message"] = message;
+                await _auditLogger.LogAsync("System User", message, User.Identity.Name ?? "N/A");
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "An error occurred while activating/deactivating the account.";
-                await LogWithCatch("System User", "Failed to toggle active status.", ex);
+                await _auditLogger.LogAsync("System User", $"ToggleActive failed: {ex.Message}", User.Identity.Name ?? "N/A");
             }
 
             return RedirectToAction("Index");
@@ -141,22 +145,25 @@ namespace SitioSubicIMS.Web.Controllers.Admin
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRole(string userId, string newRole)
         {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(newRole))
+                return BadRequest();
+
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null || string.IsNullOrWhiteSpace(newRole)) return NotFound();
+                if (user == null) return NotFound();
 
                 if (IsProtectedUser(user))
                 {
                     TempData["Error"] = "You cannot perform this action on your own or protected admin account.";
-                    await _auditLogger.LogAsync("System User", $"Unable to modify role for {user.Email}.", User.Identity.Name ?? "N/A");
+                    await _auditLogger.LogAsync("System User", $"Attempted to assign role to protected user: {user.Email}", User.Identity.Name ?? "N/A");
                     return RedirectToAction("Index");
                 }
 
-                var existingRoles = await _userManager.GetRolesAsync(user);
-                if (existingRoles.Any())
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Any())
                 {
-                    await _userManager.RemoveFromRolesAsync(user, existingRoles);
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
                 }
 
                 if (!await _roleManager.RoleExistsAsync(newRole))
@@ -171,24 +178,24 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 await _userManager.UpdateAsync(user);
 
                 var fullName = await GetFullName(userId);
-                TempData["Message"] = $"Role '{newRole}' assigned to {fullName}.";
-                await _auditLogger.LogAsync("System User", TempData["Message"].ToString(), User.Identity.Name ?? "N/A");
+                string message = $"Role '{newRole}' assigned to {fullName}.";
+                TempData["Message"] = message;
+                await _auditLogger.LogAsync("System User", message, User.Identity.Name ?? "N/A");
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "An error occurred while assigning role.";
-                await LogWithCatch("System User", "Failed to assign role.", ex);
+                await _auditLogger.LogAsync("System User", $"AssignRole failed: {ex.Message}", User.Identity.Name ?? "N/A");
             }
 
             return RedirectToAction("Index");
         }
 
+        // Helper Methods
         private async Task<string> GetFullName(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-
-            if (user == null)
-                return string.Empty;
+            if (user == null) return string.Empty;
 
             return new UserViewModel
             {
@@ -202,18 +209,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
         {
             return user.UserName == "admin@sitiosubicims.local" ||
                    user.Id == _userManager.GetUserId(User);
-        }
-
-        private async Task LogWithCatch(string module, string message, Exception ex)
-        {
-            try
-            {
-                await _auditLogger.LogAsync(module, $"{message} Exception: {ex.Message}", User.Identity.Name ?? "N/A");
-            }
-            catch
-            {
-                // Optional: handle logging failure silently or add fallback
-            }
         }
     }
 }
