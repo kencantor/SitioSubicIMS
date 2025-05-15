@@ -5,7 +5,7 @@
     int pageSize = 10;
 }
 
-<h2>@ViewData["Title"]</h2>
+<h4>@ViewData["Title"]</h4>
 <div class="card mb-4">
     <div class="card-header">Update Active Configuration</div>
     <div class="card-body">
@@ -113,53 +113,103 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Pagination script if you want -->
-        <script>
-            const rowsPerPage = @pageSize;
-            const table = document.getElementById('configTable');
-            let currentPage = 1;
-            const rows = table.tBodies[0].rows;
-            const totalPages = Math.ceil(rows.length / rowsPerPage);
-
-            function showPage(page) {
-                currentPage = page;
-                const start = (page - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                for (let i = 0; i < rows.length; i++) {
-                    rows[i].style.display = (i >= start && i < end) ? '' : 'none';
-                }
-                updatePagination();
-            }
-
-            function updatePagination() {
-                const pagination = document.getElementById('pagination');
-                pagination.innerHTML = '';
-
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.innerText = i;
-                    btn.classList.add('btn', 'btn-sm', 'me-1');
-                    if (i === currentPage) btn.classList.add('btn-primary');
-                    else btn.classList.add('btn-outline-primary');
-                    btn.addEventListener('click', () => showPage(i));
-                    pagination.appendChild(btn);
-                }
-            }
-
-            if (totalPages > 1) {
-                const paginationContainer = document.createElement('div');
-                paginationContainer.id = 'pagination';
-                paginationContainer.className = 'mt-3';
-                table.parentNode.appendChild(paginationContainer);
-                showPage(1);
-            }
-        </script>
+        <!-- Pagination Container -->
+        <div id="configPaginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <small id="configPaginationInfo" class="text-muted mb-2"></small>
+            <nav>
+                <ul id="configPagination" class="pagination pagination-sm mb-0"></ul>
+            </nav>
+        </div>
     </div>
 </div>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('configTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const pageSize = 10;
+            let currentPage = 1;
+            let filteredRows = rows.filter(r => r.querySelectorAll('td').length > 1); // exclude 'no record' row
+
+            const paginationInfo = document.getElementById('configPaginationInfo');
+            const paginationList = document.getElementById('configPagination');
+
+            function renderConfigPagination() {
+                const totalPages = Math.ceil(filteredRows.length / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+
+                rows.forEach(r => r.style.display = 'none');
+
+                filteredRows
+                    .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                    .forEach(r => r.style.display = '');
+
+                paginationInfo.textContent = `Showing ${filteredRows.length === 0 ? 0 : (Math.min(currentPage * pageSize, filteredRows.length) - ((currentPage - 1) * pageSize))} of ${filteredRows.length} record(s)`;
+
+                paginationList.innerHTML = '';
+                if (totalPages <= 1) return;
+
+                const addPageButton = (i) => {
+                    const li = document.createElement('li');
+                    li.className = 'page-item ' + (i === currentPage ? 'active' : '');
+                    const btn = document.createElement('button');
+                    btn.className = 'page-link';
+                    btn.textContent = i;
+                    btn.onclick = () => { currentPage = i; renderConfigPagination(); };
+                    li.appendChild(btn);
+                    paginationList.appendChild(li);
+                };
+
+                const addEllipsis = () => {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    const span = document.createElement('span');
+                    span.className = 'page-link';
+                    span.textContent = '...';
+                    li.appendChild(span);
+                    paginationList.appendChild(li);
+                };
+
+                // Prev
+                const prevLi = document.createElement('li');
+                prevLi.className = 'page-item ' + (currentPage === 1 ? 'disabled' : '');
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'page-link';
+                prevBtn.textContent = 'Prev';
+                prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderConfigPagination(); } };
+                prevLi.appendChild(prevBtn);
+                paginationList.appendChild(prevLi);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (totalPages > 7) {
+                        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                            addPageButton(i);
+                        } else if (i === 2 && currentPage > 4) {
+                            addEllipsis();
+                        } else if (i === totalPages - 1 && currentPage < totalPages - 3) {
+                            addEllipsis();
+                        }
+                    } else {
+                        addPageButton(i);
+                    }
+                }
+
+                // Next
+                const nextLi = document.createElement('li');
+                nextLi.className = 'page-item ' + (currentPage === totalPages ? 'disabled' : '');
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-link';
+                nextBtn.textContent = 'Next';
+                nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderConfigPagination(); } };
+                nextLi.appendChild(nextBtn);
+                paginationList.appendChild(nextLi);
+            }
+
+            renderConfigPagination();
+        });
+    </script>
 }

@@ -1,0 +1,198 @@
+@model List<SitioSubicIMS.Web.Models.Meter>
+@{
+    ViewData["Title"] = "Meters";
+}
+<h4>Meter Management</h4>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Add Button: navigates to Add Meter page -->
+    <a href="@Url.Action("Create", "Meters")" class="btn btn-success"><i class="bi bi-plus-lg"></i></a>
+    <!-- Client-Side Search Box -->
+    <div class="input-group" style="width: 250px;">
+        <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search meters..." />
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="meterTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
+        <thead class="table-dark">
+            <tr>
+                <th>Meter #</th>
+                <th>Serial #</th>
+                <th>Make</th>
+                <th>First Value</th>
+                <th>Date Created</th>
+                <th>Status</th>
+                <th>Actions</th>  <!-- New Actions column -->
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var meter in Model)
+            {
+                <tr class="meter-row @(meter.IsActive ? "" : "table-secondary")" data-meter-id="@meter.MeterID" data-meter-number="@meter.MeterNumber">
+                    <td>@meter.MeterNumber</td>
+                    <td>@meter.SerialNumber</td>
+                    <td>@meter.Make</td>
+                    <td>@meter.FirstValue</td>
+                    <td>@meter.DateCreated.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (meter.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Edit", "Meters", new { id = meter.MeterID })" class="btn btn-sm btn-primary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger ms-1 btn-delete" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<!-- Pagination container -->
+<div id="paginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+    <small id="paginationInfo" class="text-muted mb-2"></small>
+    <nav>
+        <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+    </nav>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="deleteForm" method="post" asp-controller="Meters" asp-action="ConfirmDelete">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="deleteMeterId" />
+                    <p>Are you sure you want to delete meter <strong id="deleteMeterNumber"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchBox = document.getElementById('searchBox');
+        const table = document.getElementById('meterTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const pageSize = 10;
+        let currentPage = 1;
+        let filteredRows = rows;
+        
+        const recordCount = document.getElementById('paginationInfo');
+        const paginationList = document.getElementById('pagination');
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredRows.length / pageSize);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+
+            rows.forEach(row => row.style.display = 'none');
+            filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                        .forEach(row => row.style.display = '');
+
+            paginationList.innerHTML = '';
+
+            if (totalPages === 0) {
+                recordCount.textContent = 'No meters found.';
+                return;
+            }
+
+            const startItem = (currentPage - 1) * pageSize + 1;
+            const endItem = Math.min(currentPage * pageSize, filteredRows.length);
+            recordCount.textContent = `Showing ${startItem} to ${endItem} of ${filteredRows.length} meters`;
+
+            function addPageItem(page, text = null, isActive = false, isDisabled = false) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+                li.innerHTML = `<a class="page-link" href="#">${text || page}</a>`;
+                if (!isDisabled) {
+                    li.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = page;
+                        renderPagination();
+                    });
+                }
+                paginationList.appendChild(li);
+            }
+
+            addPageItem(currentPage - 1, 'Previous', false, currentPage === 1);
+
+            const maxPagesToShow = 5;
+            if (totalPages <= maxPagesToShow + 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    addPageItem(i, null, i === currentPage);
+                }
+            } else {
+                addPageItem(1, '1', currentPage === 1);
+
+                if (currentPage > 3) {
+                    const ellipsis = document.createElement('li');
+                    ellipsis.className = 'page-item disabled';
+                    ellipsis.innerHTML = '<span class="page-link">...</span>';
+                    paginationList.appendChild(ellipsis);
+                }
+
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                for (let i = start; i <= end; i++) {
+                    addPageItem(i, null, i === currentPage);
+                }
+
+                if (currentPage < totalPages - 2) {
+                    const ellipsis = document.createElement('li');
+                    ellipsis.className = 'page-item disabled';
+                    ellipsis.innerHTML = '<span class="page-link">...</span>';
+                    paginationList.appendChild(ellipsis);
+                }
+
+                addPageItem(totalPages, totalPages.toString(), currentPage === totalPages);
+            }
+
+            addPageItem(currentPage + 1, 'Next', false, currentPage === totalPages);
+        }
+
+        function filterRows() {
+            const term = searchBox.value.trim().toLowerCase();
+            filteredRows = rows.filter(r => r.textContent.toLowerCase().includes(term));
+            currentPage = 1;
+            renderPagination();
+        }
+
+        searchBox.addEventListener('input', filterRows);
+        filterRows();
+
+        // Setup delete buttons
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+        const deleteMeterIdInput = document.getElementById('deleteMeterId');
+        const deleteMeterNumberText = document.getElementById('deleteMeterNumber');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tr = button.closest('tr');
+                const meterId = tr.getAttribute('data-meter-id');
+                const meterNumber = tr.getAttribute('data-meter-number');
+
+                deleteMeterIdInput.value = meterId;
+                deleteMeterNumberText.textContent = meterNumber;
+            });
+        });
+    });
+</script>

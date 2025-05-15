@@ -83,43 +83,34 @@
             }
         </tbody>
     </table>
-    <div class="d-flex justify-content-between align-items-center mt-3">
-        <small id="paginationInfo" class="text-muted"></small>
-        <nav>
-            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
-        </nav>
-    </div>
+</div>
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <small id="paginationInfo" class="text-muted"></small>
+    <nav>
+        <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+    </nav>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('searchInput');
         const roleFilter = document.getElementById('roleFilter');
         const rows = Array.from(document.querySelectorAll('tbody tr'));
-        const pagination = document.createElement('ul');
-        pagination.className = 'pagination justify-content-center mt-3';
-
-        const paginationInfo = document.createElement('div');
-        paginationInfo.className = 'text-center mt-2 text-muted small';
+        const pagination = document.getElementById('pagination');
+        const paginationInfo = document.getElementById('paginationInfo');
 
         let currentPage = 1;
         const rowsPerPage = 10;
 
-        // Inject pagination and info after the table
-        const tableContainer = document.querySelector('.table-responsive');
-        tableContainer.insertAdjacentElement('afterend', pagination);
-        tableContainer.insertAdjacentElement('afterend', paginationInfo);
-
         function filterTable() {
             const searchTerm = searchInput.value.toLowerCase();
-            const selectedRole = roleFilter.value;
+            const selectedRole = roleFilter.value.toLowerCase();
 
             rows.forEach(row => {
                 const name = row.children[0].textContent.toLowerCase();
-                const username = row.children[1].textContent.toLowerCase();
-                const email = row.children[2].textContent.toLowerCase();
-                const role = row.querySelector('select[name="NewRole"]')?.value;
+                const email = row.children[1].textContent.toLowerCase();
+                const role = row.querySelector('select[name="NewRole"]')?.value.toLowerCase();
 
-                const matchesSearch = name.includes(searchTerm) || username.includes(searchTerm) || email.includes(searchTerm);
+                const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
                 const matchesRole = !selectedRole || role === selectedRole;
 
                 row.dataset.visible = (matchesSearch && matchesRole).toString();
@@ -133,8 +124,7 @@
             const visibleRows = rows.filter(row => row.dataset.visible === "true");
             const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
 
-            // Show only rows for the current page
-            rows.forEach((row, index) => {
+            rows.forEach((row) => {
                 if (row.dataset.visible === "true") {
                     const visibleIndex = visibleRows.indexOf(row);
                     row.style.display = (visibleIndex >= (currentPage - 1) * rowsPerPage && visibleIndex < currentPage * rowsPerPage) ? "" : "none";
@@ -147,7 +137,6 @@
 
             if (totalPages === 0) return;
 
-            // Create page item helper
             const createPageItem = (page, text = null, isActive = false, isDisabled = false) => {
                 const li = document.createElement('li');
                 li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
@@ -162,11 +151,9 @@
                 return li;
             };
 
-            // Previous button
             pagination.appendChild(createPageItem(currentPage - 1, 'Previous', false, currentPage === 1));
 
             const maxPagesToShow = 5;
-
             if (totalPages <= maxPagesToShow + 2) {
                 for (let i = 1; i <= totalPages; i++) {
                     pagination.appendChild(createPageItem(i, null, i === currentPage));
@@ -192,10 +179,8 @@
                 pagination.appendChild(createPageItem(totalPages, totalPages.toString(), currentPage === totalPages));
             }
 
-            // Next button
             pagination.appendChild(createPageItem(currentPage + 1, 'Next', false, currentPage === totalPages));
 
-            // Info text
             const startItem = (currentPage - 1) * rowsPerPage + 1;
             const endItem = Math.min(currentPage * rowsPerPage, visibleRows.length);
             paginationInfo.textContent = visibleRows.length > 0
@@ -206,8 +191,8 @@
         searchInput.addEventListener('input', filterTable);
         roleFilter.addEventListener('change', filterTable);
 
-        // Initial mark for all rows
         rows.forEach(row => row.dataset.visible = "true");
         updatePagination();
     });
 </script>
+

@@ -60,7 +60,7 @@ body {
 
 .custom-user-table {
     font-size: 0.9rem; /* smaller text */
-    border: 1px solid #d3d3d3; /* light gray border */
+    border: 1px solid #3e78a3;
 }
 
     .custom-user-table th,
@@ -69,7 +69,7 @@ body {
         overflow: hidden;
         text-overflow: ellipsis;
         vertical-align: middle;
-        border: 1px solid #d3d3d3; /* light gray for all cells */
+        border: 1px solid #3e78a3;
     }
 
     .custom-user-table th {

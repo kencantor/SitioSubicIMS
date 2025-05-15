@@ -1,0 +1,54 @@
+﻿@model SitioSubicIMS.Web.Models.Meter
+@{
+    bool isEdit = Model.MeterID != 0;
+    ViewData["Title"] = isEdit ? "Edit Meter" : "Add Meter";
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<form asp-action="Save" method="post" class="needs-validation" novalidate>
+    <input type="hidden" asp-for="MeterID" />
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="MeterNumber" class="form-control" placeholder="Meter Number" />
+                <label asp-for="MeterNumber">Meter Number</label>
+                <span asp-validation-for="MeterNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="SerialNumber" class="form-control" placeholder="Serial Number" />
+                <label asp-for="SerialNumber">Serial Number</label>
+                <span asp-validation-for="SerialNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="Make" class="form-control" placeholder="Make" />
+                <label asp-for="Make">Make</label>
+                <span asp-validation-for="Make" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="FirstValue" type="number" class="form-control" placeholder="First Value" />
+                <label asp-for="FirstValue">First Value</label>
+                <span asp-validation-for="FirstValue" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">@ViewData["Title"]</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+}
