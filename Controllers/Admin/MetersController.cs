@@ -120,7 +120,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
             }
         }
 
-        // POST: Soft delete (deactivate) meter
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmDelete(int id)
@@ -136,6 +135,17 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                     return RedirectToAction(nameof(Index));
                 }
 
+                // Check if the meter is assigned to any active account
+                bool isMeterInUse = await _context.Accounts
+                    .AnyAsync(a => a.MeterID == id && a.IsActive);
+
+                if (isMeterInUse)
+                {
+                    TempData["Error"] = "Meter cannot be deleted because it is assigned to an active account.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Proceed with soft delete
                 meter.IsActive = false;
                 meter.DateUpdated = DateTime.Now;
                 meter.UpdatedBy = currentUser;
@@ -156,6 +166,7 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 return RedirectToAction(nameof(Index));
             }
         }
+
         private bool IsValid(Meter meter, out string errorMessage)
         {
             // Check for duplicate meter number
