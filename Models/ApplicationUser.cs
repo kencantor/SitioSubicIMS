@@ -15,5 +15,19 @@ namespace SitioSubicIMS.Web.Models
         public string ModifiedBy { get; set; } // Who modified the record
         public bool IsLocked { get; set; } = false;
         public bool IsActive { get; set; } = true;// Active status for the user
+
+        // Computed full name property
+        public string FullName
+        {
+            get
+            {
+                var middleInitial = !string.IsNullOrWhiteSpace(MiddleName)
+                    ? $"{MiddleName.Trim()[0]}."
+                    : string.Empty;
+
+                string fullname = $"{LastName}, {FirstName} {middleInitial}".Replace("  ", " ").Trim();
+                return string.IsNullOrEmpty(LastName) ? fullname.Replace(",", "") : fullname;
+            }
+        }
     }
 }

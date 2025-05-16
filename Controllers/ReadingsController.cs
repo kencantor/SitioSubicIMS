@@ -8,9 +8,11 @@ using SitioSubicIMS.Web.Models.ViewModels;
 using SitioSubicIMS.Web.Services.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Twilio.Types;
 
 namespace SitioSubicIMS.Web.Controllers
 {
@@ -19,11 +21,13 @@ namespace SitioSubicIMS.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogger _auditLogger;
+        private readonly ISmsService _smsService;
 
-        public ReadingsController(ApplicationDbContext context, IAuditLogger auditLogger)
+        public ReadingsController(ApplicationDbContext context, IAuditLogger auditLogger, ISmsService smsService)
         {
             _context = context;
             _auditLogger = auditLogger;
+            _smsService = smsService;
         }
 
         // Helper method to populate ViewBag.Meters with SelectListItems (MeterNumber + AccountName)
@@ -203,8 +207,85 @@ namespace SitioSubicIMS.Web.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-
                 TempData["Message"] = "Reading saved successfully.";
+
+                //SMS ALERT
+                var config = await _context.SMSAlerts
+                    .Where(c => c.IsActive)
+                    .OrderByDescending(c => c.DateCreated)
+                    .FirstOrDefaultAsync();
+                if (config != null && config.AllowSMSAlerts && config.AllowReadingAlerts)
+                {
+                    // Get account by MeterID from reading
+                    var account = await _context.Accounts
+                        .Where(a => a.MeterID == reading.MeterID)
+                        .FirstOrDefaultAsync();
+
+                    // Get current system configuration values
+                    var sysconfig = await _context.Configurations
+                        .Where(s => s.IsActive)
+                        .FirstOrDefaultAsync();
+
+                    if (account != null && sysconfig != null)
+                    {
+                        // Find the previous reading for the meter before this reading date
+                        var previousReading = await _context.Readings
+                            .Where(r => r.MeterID == reading.MeterID && r.ReadingDate < reading.ReadingDate)
+                            .OrderByDescending(r => r.ReadingDate)
+                            .FirstOrDefaultAsync();
+
+                        // Get the meter record to access FirstValue
+                        var meter = await _context.Meters.FindAsync(reading.MeterID);
+
+                        decimal previousValue = previousReading?.ReadingValue ?? meter?.FirstValue ?? 0;
+
+                        decimal consumption = reading.ReadingValue - previousValue;
+
+                        // Calculate charge based on consumption and system config
+                        decimal charge;
+                        if (consumption > sysconfig.MinimumConsumption)
+                        {
+                            charge = consumption * sysconfig.PricePerCubicMeter;
+                        }
+                        else
+                        {
+                            charge = sysconfig.MinimumCharge;
+                        }
+
+                        string phoneNumber = account.ContactNumber;
+                        if (!string.IsNullOrWhiteSpace(phoneNumber))
+                        {
+                            var currentReader = await _context.Users.FindAsync(currentUserId);
+                            string readerName = currentReader?.FullName ?? User.Identity.Name ?? "N/A";
+
+                            //// Compose message with consumption and charge details
+                            //string message = $"Dear customer, your meter reading of {reading.ReadingValue} on {DateTime.Now:yyyy-MM-dd HH:mm:ss} " +
+                            //                 $"has been recorded. Consumption: {consumption} cubic meters. " +
+                            //                 $"Amount due: {charge:C2}. Thank you. Reader: {readerName}";
+                            string message = $"TEST Reading: {reading.ReadingValue}. Cons: {consumption}m³, Due: {charge:C0}.";// Thanks, {readerName}.";
+
+                            bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
+
+                            if (smsSent)
+                            {
+                                await _auditLogger.LogAsync("SMS", $"SMS alert sent successfully to {phoneNumber} for meter ID {reading.MeterID}", currentUser);
+                            }
+                            else
+                            {
+                                await _auditLogger.LogAsync("SMS", $"Failed to send SMS alert to {phoneNumber} for meter ID {reading.MeterID}", currentUser);
+                                TempData["Warning"] = "SMS Alert failed to send.";
+                            }
+                        }
+                        else
+                        {
+                            await _auditLogger.LogAsync("SMS", $"No contact number found for account linked to meter ID {reading.MeterID}", currentUser);
+                        }
+                    }
+                    else
+                    {
+                        await _auditLogger.LogAsync("SMS", $"No account or active system config found for meter ID {reading.MeterID} when sending SMS alert.", currentUser);
+                    }
+                }
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)

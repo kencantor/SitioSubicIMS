@@ -17,6 +17,8 @@ namespace SitioSubicIMS.Web.Data
         public DbSet<Meter> Meters { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Reading> Readings { get; set; }
+        public DbSet<SMSAlert> SMSAlerts { get; set; }
+        public DbSet<SMSLog> SMSLogs { get; set; }
 
     }
 }

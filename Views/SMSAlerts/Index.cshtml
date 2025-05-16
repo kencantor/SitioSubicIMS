@@ -1,0 +1,241 @@
+﻿@model SitioSubicIMS.Web.Models.ViewModels.SMSAlertViewModel
+
+@{
+    ViewData["Title"] = "SMS Settings";
+    int pageSize = 10;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<div class="card mb-4">
+    <div class="card-header">Update SMS Configuration</div>
+    <div class="card-body">
+        <form asp-action="Update" method="post" novalidate>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        <input asp-for="Latest.AllowSMSAlerts" class="form-check-input" />
+                        <label asp-for="Latest.AllowSMSAlerts" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        <input asp-for="Latest.AllowReadingAlerts" class="form-check-input" />
+                        <label asp-for="Latest.AllowReadingAlerts" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        <input asp-for="Latest.AllowBillingAlerts" class="form-check-input" />
+                        <label asp-for="Latest.AllowBillingAlerts" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mb-3">
+                        <input asp-for="Latest.AllowPaymentAlerts" class="form-check-input" />
+                        <label asp-for="Latest.AllowPaymentAlerts" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.MessageHeader" class="form-control" placeholder="Message Header" />
+                        <label asp-for="Latest.MessageHeader">Message Header</label>
+                        <span asp-validation-for="Latest.MessageHeader" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.TwilioAccountSID" class="form-control" placeholder="Twilio Account SID" />
+                        <label asp-for="Latest.TwilioAccountSID">Twilio Account SID</label>
+                        <span asp-validation-for="Latest.TwilioAccountSID" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.TwilioAuthToken" class="form-control" placeholder="Twilio Auth Token" />
+                        <label asp-for="Latest.TwilioAuthToken">Twilio Auth Token</label>
+                        <span asp-validation-for="Latest.TwilioAuthToken" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input asp-for="Latest.TwilioFromPhoneNumber" class="form-control" placeholder="Twilio From Phone Number" />
+                        <label asp-for="Latest.TwilioFromPhoneNumber">Twilio From Phone Number</label>
+                        <span asp-validation-for="Latest.TwilioFromPhoneNumber" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">SMS Configuration History</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle table-sm custom-user-table" id="configTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th hidden>#</th>
+                        <th>Date Created</th>
+                        <th>Allow SMS Alerts</th>
+                        <th>Reading Alerts</th>
+                        <th>Billing Alerts</th>
+                        <th>Payment Alerts</th>
+                        <th>Message Header</th>
+                        <th>Twilio SID</th>
+                        <th>From Number</th>
+                        <th>Created By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Alerts != null && Model.Alerts.Any())
+                    {
+                        int count = 1;
+                        foreach (var c in Model.Alerts)
+                        {
+                            <tr>
+                                <td hidden>@count</td>
+                                <td>@c.DateCreated.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@(c.AllowSMSAlerts ? "Yes" : "No")</td>
+                                <td>@(c.AllowReadingAlerts ? "Yes" : "No")</td>
+                                <td>@(c.AllowBillingAlerts ? "Yes" : "No")</td>
+                                <td>@(c.AllowPaymentAlerts ? "Yes" : "No")</td>
+                                <td>@c.MessageHeader</td>
+                                <td>@c.TwilioAccountSID</td>
+                                <td>@c.TwilioFromPhoneNumber</td>
+                                <td>@c.CreatedBy</td>
+                                <td>
+                                    @if (c.SMSAlertID == Model.Latest.SMSAlertID)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                            </tr>
+                            count++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center">No SMS configuration records found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination Container -->
+        <div id="smsConfigPaginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <small id="smsConfigPaginationInfo" class="text-muted mb-2"></small>
+            <nav>
+                <ul id="smsConfigPagination" class="pagination pagination-sm mb-0"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('smsConfigTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const pageSize = 10;
+            let currentPage = 1;
+            let filteredRows = rows.filter(r => r.querySelectorAll('td').length > 1); // exclude 'no record' row
+
+            const paginationInfo = document.getElementById('smsConfigPaginationInfo');
+            const paginationList = document.getElementById('smsConfigPagination');
+
+            function renderPagination() {
+                const totalPages = Math.ceil(filteredRows.length / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+
+                rows.forEach(r => r.style.display = 'none');
+
+                filteredRows
+                    .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                    .forEach(r => r.style.display = '');
+
+                paginationInfo.textContent = `Showing ${filteredRows.length === 0 ? 0 : (Math.min(currentPage * pageSize, filteredRows.length) - ((currentPage - 1) * pageSize))} of ${filteredRows.length} record(s)`;
+
+                paginationList.innerHTML = '';
+                if (totalPages <= 1) return;
+
+                const addPageButton = (i) => {
+                    const li = document.createElement('li');
+                    li.className = 'page-item ' + (i === currentPage ? 'active' : '');
+                    const btn = document.createElement('button');
+                    btn.className = 'page-link';
+                    btn.textContent = i;
+                    btn.onclick = () => { currentPage = i; renderPagination(); };
+                    li.appendChild(btn);
+                    paginationList.appendChild(li);
+                };
+
+                const addEllipsis = () => {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    const span = document.createElement('span');
+                    span.className = 'page-link';
+                    span.textContent = '...';
+                    li.appendChild(span);
+                    paginationList.appendChild(li);
+                };
+
+                // Prev
+                const prevLi = document.createElement('li');
+                prevLi.className = 'page-item ' + (currentPage === 1 ? 'disabled' : '');
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'page-link';
+                prevBtn.textContent = 'Prev';
+                prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPagination(); } };
+                prevLi.appendChild(prevBtn);
+                paginationList.appendChild(prevLi);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (totalPages > 7) {
+                        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                            addPageButton(i);
+                        } else if (i === 2 && currentPage > 4) {
+                            addEllipsis();
+                        } else if (i === totalPages - 1 && currentPage < totalPages - 3) {
+                            addEllipsis();
+                        }
+                    } else {
+                        addPageButton(i);
+                    }
+                }
+
+                // Next
+                const nextLi = document.createElement('li');
+                nextLi.className = 'page-item ' + (currentPage === totalPages ? 'disabled' : '');
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-link';
+                nextBtn.textContent = 'Next';
+                nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPagination(); } };
+                nextLi.appendChild(nextBtn);
+                paginationList.appendChild(nextLi);
+            }
+
+            renderPagination();
+        });
+    </script>
+}
