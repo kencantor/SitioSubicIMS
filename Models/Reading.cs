@@ -61,5 +61,10 @@ namespace SitioSubicIMS.Web.Models
 
         [ForeignKey("MeterID")]
         public Meter? Meter { get; set; }
+
+        public decimal PreviousReadingValue { get; set; }
+
+        [NotMapped]
+        public decimal Consumption => ReadingValue - PreviousReadingValue;
     }
 }

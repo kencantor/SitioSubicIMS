@@ -158,6 +158,7 @@ namespace SitioSubicIMS.Web.Controllers
                 PopulateMetersViewBag();
                 return View("ReadingForm", reading);
             }
+
             string errorMessage;
             if (!IsValid(reading, out errorMessage))
             {
@@ -165,11 +166,26 @@ namespace SitioSubicIMS.Web.Controllers
                 TempData["Error"] = errorMessage;
                 return View("ReadingForm", reading);
             }
+
             var currentUser = User.Identity?.Name ?? "System";
 
             try
             {
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                // Get the previous reading before the current reading date
+                var previousReading = await _context.Readings
+                    .Where(r => r.MeterID == reading.MeterID && r.ReadingDate < reading.ReadingDate)
+                    .OrderByDescending(r => r.ReadingDate)
+                    .FirstOrDefaultAsync();
+
+                // Get the meter to retrieve its FirstValue if no previous reading exists
+                var meter = await _context.Meters.FindAsync(reading.MeterID);
+                decimal previousValue = previousReading?.ReadingValue ?? meter?.FirstValue ?? 0;
+
+                // Assign to reading
+                reading.PreviousReadingValue = previousValue;
+
                 if (reading.ReadingID == 0)
                 {
                     // New reading
@@ -179,8 +195,7 @@ namespace SitioSubicIMS.Web.Controllers
                     reading.CreatedBy = currentUser;
 
                     _context.Readings.Add(reading);
-                    var meter = await _context.Meters.FindAsync(reading.MeterID);
-                    await _auditLogger.LogAsync("Reading", $"Created new reading for Meter # {meter.MeterNumber}", currentUser);
+                    await _auditLogger.LogAsync("Reading", $"Created new reading for Meter # {meter?.MeterNumber}", currentUser);
                 }
                 else
                 {
@@ -196,6 +211,7 @@ namespace SitioSubicIMS.Web.Controllers
                     existing.UserID = reading.UserID;
                     existing.ReadingDate = reading.ReadingDate;
                     existing.ReadingValue = reading.ReadingValue;
+                    existing.PreviousReadingValue = previousValue;
                     existing.BillingMonth = reading.BillingMonth;
                     existing.BillingYear = reading.BillingYear;
                     existing.IsBilled = reading.IsBilled;
@@ -207,50 +223,34 @@ namespace SitioSubicIMS.Web.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                await CreateOrUpdateBillingAsync(reading);
+
                 TempData["Message"] = "Reading saved successfully.";
 
-                //SMS ALERT
+                // SMS ALERT
                 var config = await _context.SMSAlerts
                     .Where(c => c.IsActive)
                     .OrderByDescending(c => c.DateCreated)
                     .FirstOrDefaultAsync();
+
                 if (config != null && config.AllowSMSAlerts && config.AllowReadingAlerts)
                 {
-                    // Get account by MeterID from reading
                     var account = await _context.Accounts
                         .Where(a => a.MeterID == reading.MeterID)
                         .FirstOrDefaultAsync();
 
-                    // Get current system configuration values
                     var sysconfig = await _context.Configurations
                         .Where(s => s.IsActive)
                         .FirstOrDefaultAsync();
 
                     if (account != null && sysconfig != null)
                     {
-                        // Find the previous reading for the meter before this reading date
-                        var previousReading = await _context.Readings
-                            .Where(r => r.MeterID == reading.MeterID && r.ReadingDate < reading.ReadingDate)
-                            .OrderByDescending(r => r.ReadingDate)
-                            .FirstOrDefaultAsync();
-
-                        // Get the meter record to access FirstValue
-                        var meter = await _context.Meters.FindAsync(reading.MeterID);
-
-                        decimal previousValue = previousReading?.ReadingValue ?? meter?.FirstValue ?? 0;
-
                         decimal consumption = reading.ReadingValue - previousValue;
 
-                        // Calculate charge based on consumption and system config
-                        decimal charge;
-                        if (consumption > sysconfig.MinimumConsumption)
-                        {
-                            charge = consumption * sysconfig.PricePerCubicMeter;
-                        }
-                        else
-                        {
-                            charge = sysconfig.MinimumCharge;
-                        }
+                        decimal charge = (consumption > sysconfig.MinimumConsumption)
+                            ? consumption * sysconfig.PricePerCubicMeter
+                            : sysconfig.MinimumCharge;
 
                         string phoneNumber = account.ContactNumber;
                         if (!string.IsNullOrWhiteSpace(phoneNumber))
@@ -258,12 +258,9 @@ namespace SitioSubicIMS.Web.Controllers
                             var currentReader = await _context.Users.FindAsync(currentUserId);
                             string readerName = currentReader?.FullName ?? User.Identity.Name ?? "N/A";
 
-                            //// Compose message with consumption and charge details
-                            //string message = $"Dear customer, your meter reading of {reading.ReadingValue} on {DateTime.Now:yyyy-MM-dd HH:mm:ss} " +
-                            //                 $"has been recorded. Consumption: {consumption} cubic meters. " +
-                            //                 $"Amount due: {charge:C2}. Thank you. Reader: {readerName}";
                             string formattedCharge = "Php " + charge.ToString("N2");
-                            string message = $"Dear Consumer, here is your reading details: Reading Value - {reading.ReadingValue}. Consumption: {consumption}. Due: {formattedCharge}. Thanks, Field Reader: {readerName}. ";
+                            string message = $"Dear Consumer, here is your reading details: Reading Value - {reading.ReadingValue}. " +
+                                             $"Consumption: {consumption}. Due: {formattedCharge}. Thanks, Field Reader: {readerName}. ";
 
                             bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
 
@@ -287,6 +284,7 @@ namespace SitioSubicIMS.Web.Controllers
                         await _auditLogger.LogAsync("SMS", $"No account or active system config found for meter ID {reading.MeterID} when sending SMS alert.", currentUser);
                     }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -299,6 +297,7 @@ namespace SitioSubicIMS.Web.Controllers
                 return View("ReadingForm", reading);
             }
         }
+
 
         // POST: Soft delete reading
         [HttpPost]
@@ -409,6 +408,121 @@ namespace SitioSubicIMS.Web.Controllers
 
             errorMessage = string.Empty;
             return true;
+        }
+
+        private async Task<string> GenerateBillingNumberAsync()
+        {
+            // Format: B + MM + yy + 5-digit zero-padded sequence (e.g. B05252400001)
+            var now = DateTime.Now;
+            string prefix = "B" + now.ToString("MMyy");
+
+            // Get the max existing billing number with this prefix
+            var maxBillingNumber = await _context.Billings
+                .Where(b => b.BillingNumber.StartsWith(prefix))
+                .OrderByDescending(b => b.BillingNumber)
+                .Select(b => b.BillingNumber)
+                .FirstOrDefaultAsync();
+
+            int nextSequence = 1;
+            if (maxBillingNumber != null)
+            {
+                // Extract the numeric suffix and increment
+                string numericPart = maxBillingNumber.Substring(prefix.Length);
+                if (int.TryParse(numericPart, out int lastSeq))
+                {
+                    nextSequence = lastSeq + 1;
+                }
+            }
+
+            return prefix + nextSequence.ToString("D5"); // zero pad 5 digits
+        }
+        private async Task CreateOrUpdateBillingAsync(Reading reading)
+        {
+            var currentUser = User.Identity?.Name ?? "System";
+
+            // Get active system configuration (assuming only one active)
+            var config = await _context.Configurations
+                .Where(c => c.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (config == null)
+            {
+                throw new InvalidOperationException("Active system configuration not found.");
+            }
+
+            // Fetch all unpaid billings for the meter (excluding current reading)
+            var unpaidBillings = await _context.Billings
+                .Where(b => b.Reading.MeterID == reading.MeterID &&
+                            b.BillingStatus == BillingStatus.Unpaid &&
+                            b.IsActive &&
+                            b.ReadingID != reading.ReadingID)
+                .OrderByDescending(b => b.BillingDate)
+                .ToListAsync();
+
+            // Calculate arrears
+            var previousArrears = unpaidBillings.Sum(b => b.OverDueAmount);
+
+            // Mark latest unpaid billing as Overdue
+            var latestUnpaid = unpaidBillings.FirstOrDefault();
+            if (latestUnpaid != null)
+            {
+                latestUnpaid.BillingStatus = BillingStatus.Overdue;
+                latestUnpaid.DateUpdated = DateTime.Now;
+                latestUnpaid.UpdatedBy = currentUser;
+
+                _context.Billings.Update(latestUnpaid);
+                await _auditLogger.LogAsync("Billing", $"Marked Billing {latestUnpaid.BillingNumber} as Overdue", currentUser);
+            }
+
+            // Try to find existing billing for this reading
+            var existingBilling = await _context.Billings
+                .FirstOrDefaultAsync(b => b.ReadingID == reading.ReadingID);
+
+            if (existingBilling == null)
+            {
+                // Create new billing record
+                var billing = new Billing
+                {
+                    BillingNumber = await GenerateBillingNumberAsync(),
+                    ReadingID = reading.ReadingID,
+                    BillingDate = DateTime.Now,
+                    RatePerCubicMeter = config.PricePerCubicMeter,
+                    MinimumConsumption = config.MinimumConsumption,
+                    MinimumCharge = config.MinimumCharge,
+                    PenaltyRate = config.PenaltyRate,
+                    VATRate = config.VATRate,
+                    DueDate = DateTime.Now.AddDays(7),
+                    DisconnectionDate = DateTime.Now.AddDays(15),
+                    BillingStatus = BillingStatus.Pending,
+                    DateCreated = DateTime.Now,
+                    CreatedBy = currentUser,
+                    IsActive = true,
+                    Arrears = previousArrears
+                };
+
+                _context.Billings.Add(billing);
+                await _auditLogger.LogAsync("Billing", $"Added Billing {billing.BillingNumber}", currentUser);
+            }
+            else
+            {
+                // Update existing billing record
+                existingBilling.RatePerCubicMeter = config.PricePerCubicMeter;
+                existingBilling.MinimumConsumption = config.MinimumConsumption;
+                existingBilling.MinimumCharge = config.MinimumCharge;
+                existingBilling.PenaltyRate = config.PenaltyRate;
+                existingBilling.VATRate = config.VATRate;
+                existingBilling.DueDate = DateTime.Now.AddDays(7);
+                existingBilling.DisconnectionDate = DateTime.Now.AddDays(15);
+                existingBilling.BillingStatus = BillingStatus.Pending;
+                existingBilling.Arrears = previousArrears;
+                existingBilling.DateUpdated = DateTime.Now;
+                existingBilling.UpdatedBy = currentUser;
+
+                _context.Billings.Update(existingBilling);
+                await _auditLogger.LogAsync("Billing", $"Updated Billing {existingBilling.BillingNumber}", currentUser);
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

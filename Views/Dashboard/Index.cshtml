@@ -9,10 +9,10 @@
     @if (User.IsInRole("Administrator") || User.IsInRole("Teller"))
     {
         <div class="col">
-            <a asp-controller="Billing" asp-action="Index" class="text-decoration-none">
+            <a asp-controller="Billings" asp-action="Index" class="text-decoration-none">
                 <div class="module-tile">
                     <i class="bi bi-receipt module-icon text-info"></i>
-                    <div class="module-label small">Billing</div>
+                    <div class="module-label small">Billings</div>
                 </div>
             </a>
         </div>

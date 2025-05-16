@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SitioSubicIMS.Web.Data;
 
@@ -11,9 +12,11 @@ using SitioSubicIMS.Web.Data;
 namespace SitioSubicIMS.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516153825_BillingStatus")]
+    partial class BillingStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,76 +24,6 @@ namespace SitioSubicIMS.Web.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Billing", b =>
-                {
-                    b.Property<int>("BillingID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BillingID"));
-
-                    b.Property<decimal>("Arrears")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("BillingDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("BillingNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("BillingStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateUpdated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DisconnectionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("MinimumCharge")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("MinimumConsumption")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PenaltyRate")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal>("RatePerCubicMeter")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ReadingID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<decimal>("VATRate")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.HasKey("BillingID");
-
-                    b.HasIndex("ReadingID");
-
-                    b.ToTable("Billings");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -404,6 +337,74 @@ namespace SitioSubicIMS.Web.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("SitioSubicIMS.Web.Models.Billing", b =>
+                {
+                    b.Property<int>("BillingID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BillingID"));
+
+                    b.Property<DateTime>("BillingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("BillingNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("BillingStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DisconnectionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("MinimumCharge")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("MinimumConsumption")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PenaltyRate")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("RatePerCubicMeter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ReadingID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("VATRate")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("BillingID");
+
+                    b.HasIndex("ReadingID");
+
+                    b.ToTable("Billings");
+                });
+
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Configuration", b =>
                 {
                     b.Property<int>("ConfigurationID")
@@ -521,9 +522,6 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Property<int>("MeterID")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PreviousReadingValue")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<DateTime>("ReadingDate")
                         .HasColumnType("datetime2");
 
@@ -634,17 +632,6 @@ namespace SitioSubicIMS.Web.Migrations
                     b.ToTable("SMSLogs");
                 });
 
-            modelBuilder.Entity("Billing", b =>
-                {
-                    b.HasOne("SitioSubicIMS.Web.Models.Reading", "Reading")
-                        .WithMany()
-                        .HasForeignKey("ReadingID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Reading");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -705,6 +692,17 @@ namespace SitioSubicIMS.Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Meter");
+                });
+
+            modelBuilder.Entity("SitioSubicIMS.Web.Models.Billing", b =>
+                {
+                    b.HasOne("SitioSubicIMS.Web.Models.Reading", "Reading")
+                        .WithMany()
+                        .HasForeignKey("ReadingID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reading");
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Reading", b =>

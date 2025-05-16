@@ -1,0 +1,190 @@
+﻿@model List<SitioSubicIMS.Web.Models.ViewModels.BillingViewModel>
+
+@{
+    ViewData["Title"] = "Billing Records";
+}
+
+<h4>Billing Records</h4>
+
+<div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="input-group" style="width: 250px;">
+        <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search billings..." />
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="billingTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
+        <thead class="table-dark">
+            <tr>
+                <th>Billing #</th>
+                <th>Account</th>
+                <th>Prev</th>
+                <th>Curr</th>
+                <th>Cons</th>
+                <th>Due Date</th>
+                <th>Penalty</th>
+                <th>VAT</th>
+                <th>Arrears</th>
+                <th>Due Amt</th>
+                <th>Overdue Amt</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var billing = item.Billing;
+                var account = item.Account;
+                var meter = item.Meter;
+
+                <tr>
+                    <td>@billing.BillingNumber</td>
+                    <td>@account?.AccountName</td>
+                    <td>@billing.Reading.PreviousReadingValue.ToString("N0")</td>
+                    <td>@billing.Reading.ReadingValue.ToString("N0")</td>
+                    <td>@billing.Reading.Consumption.ToString("N0")</td>
+                    <td>@billing.DueDate.ToString("yyyy-MM-dd")</td>
+                    <td>@billing.Penalty.ToString("N2")</td>
+                    <td>@billing.VATAmount.ToString("N2")</td>
+                    <td>@billing.Arrears.ToString("N2")</td>
+                    <td>@billing.DueAmount.ToString("N2")</td>
+                    <td>@billing.OverDueAmount.ToString("N2")</td>
+                    <td>
+                        @if (billing.BillingStatus == BillingStatus.Paid)
+                        {
+                            <span class="badge bg-success">Paid</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">@billing.BillingStatus.ToString()</span>
+                        }
+                    </td>
+                    <td>
+                        @if (billing.BillingStatus == BillingStatus.Pending)
+                        {
+                            <a asp-action="Confirm"
+                               asp-route-id="@billing.BillingID"
+                               class="btn btn-sm btn-success me-1"
+                               title="Confirm Billing">
+                                <i class="bi bi-check-circle"></i>
+                            </a>
+                        }
+
+                        <a asp-action="View"
+                           asp-route-id="@billing.BillingID"
+                           class="btn btn-sm btn-primary"
+                           title="View Billing Details">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="paginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+    <small id="paginationInfo" class="text-muted mb-2"></small>
+    <nav>
+        <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+    </nav>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchBox = document.getElementById('searchBox');
+            const table = document.getElementById('billingTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const pageSize = 10;
+            let currentPage = 1;
+            let filteredRows = rows;
+
+            const recordCount = document.getElementById('paginationInfo');
+            const paginationList = document.getElementById('pagination');
+
+            function renderPagination() {
+                const totalPages = Math.ceil(filteredRows.length / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+
+                rows.forEach(row => row.style.display = 'none');
+                filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                            .forEach(row => row.style.display = '');
+
+                paginationList.innerHTML = '';
+
+                if (totalPages === 0) {
+                    recordCount.textContent = 'No billing records found.';
+                    return;
+                }
+
+                const startItem = (currentPage - 1) * pageSize + 1;
+                const endItem = Math.min(currentPage * pageSize, filteredRows.length);
+                recordCount.textContent = `Showing ${startItem} to ${endItem} of ${filteredRows.length} records`;
+
+                function addPageItem(page, text = null, isActive = false, isDisabled = false) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+                    li.innerHTML = `<a class="page-link" href="#">${text || page}</a>`;
+                    if (!isDisabled) {
+                        li.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            currentPage = page;
+                            renderPagination();
+                        });
+                    }
+                    paginationList.appendChild(li);
+                }
+
+                addPageItem(currentPage - 1, 'Previous', false, currentPage === 1);
+
+                const maxPagesToShow = 5;
+                if (totalPages <= maxPagesToShow + 2) {
+                    for (let i = 1; i <= totalPages; i++) {
+                        addPageItem(i, null, i === currentPage);
+                    }
+                } else {
+                    addPageItem(1, '1', currentPage === 1);
+
+                    if (currentPage > 3) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationList.appendChild(ellipsis);
+                    }
+
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+
+                    for (let i = start; i <= end; i++) {
+                        addPageItem(i, null, i === currentPage);
+                    }
+
+                    if (currentPage < totalPages - 2) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationList.appendChild(ellipsis);
+                    }
+
+                    addPageItem(totalPages, totalPages.toString(), currentPage === totalPages);
+                }
+
+                addPageItem(currentPage + 1, 'Next', false, currentPage === totalPages);
+            }
+
+            function filterRows() {
+                const term = searchBox.value.trim().toLowerCase();
+                filteredRows = rows.filter(r => r.textContent.toLowerCase().includes(term));
+                currentPage = 1;
+                renderPagination();
+            }
+
+            searchBox.addEventListener('input', filterRows);
+            filterRows();
+        });
+    </script>
+}
