@@ -1,0 +1,76 @@
+﻿@model SitioSubicIMS.Web.Models.Account
+
+@{
+    bool isEdit = Model.AccountID != 0;
+    ViewData["Title"] = isEdit ? "Edit Account" : "Add Account";
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<form asp-action="Save" method="post" class="needs-validation" novalidate>
+    <input type="hidden" asp-for="AccountID" />
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4">
+            @if (!isEdit) // New account
+            {
+                <div class="form-floating">
+                    <input class="form-control" value="Auto-Generated" placeholder="Account Number" disabled />
+                    <label asp-for="AccountNumber">Account Number</label>
+                    <span asp-validation-for="AccountNumber" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <div class="form-floating">
+                    <input asp-for="AccountNumber" class="form-control" placeholder="Account Number" readonly />
+                    <label asp-for="AccountNumber">Account Number</label>
+                    <span asp-validation-for="AccountNumber" class="text-danger"></span>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="AccountName" class="form-control" placeholder="Account Name" />
+                <label asp-for="AccountName">Account Name</label>
+                <span asp-validation-for="AccountName" class="text-danger"></span>
+            </div>
+        </div>
+        <!-- Meter Dropdown -->
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <select asp-for="MeterID" class="form-select" asp-items="ViewBag.MeterList">
+                    <option value="">-- Select Meter --</option>
+                </select>
+                <label asp-for="MeterID">Meter</label>
+                <span asp-validation-for="MeterID" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <input asp-for="ContactNumber" class="form-control" placeholder="Contact Number" />
+                <label asp-for="ContactNumber">Contact Number</label>
+                <span asp-validation-for="ContactNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-8">
+            <div class="form-floating">
+                <input asp-for="Address" class="form-control" placeholder="Address" />
+                <label asp-for="Address">Address</label>
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">@ViewData["Title"]</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

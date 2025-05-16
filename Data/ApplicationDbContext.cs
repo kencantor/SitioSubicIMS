@@ -15,6 +15,7 @@ namespace SitioSubicIMS.Web.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<Meter> Meters { get; set; }
+        public DbSet<Account> Accounts { get; set; }
 
     }
 }
