@@ -66,7 +66,11 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 // Return form with validation errors
                 return View("MeterForm", meter);
             }
-
+            if (!IsValid(meter, out string errorMessage))
+            {
+                ModelState.AddModelError(nameof(meter.MeterNumber), errorMessage);
+                return View("MeterForm", meter);
+            }
             var currentUser = User.Identity?.Name ?? "System";
 
             try
@@ -152,5 +156,26 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 return RedirectToAction(nameof(Index));
             }
         }
+        private bool IsValid(Meter meter, out string errorMessage)
+        {
+            // Check for duplicate meter number
+            bool isDuplicate = _context.Meters.Any(m =>
+                m.IsActive &&
+                m.MeterNumber == meter.MeterNumber &&
+                m.MeterID != meter.MeterID
+            );
+
+            if (isDuplicate)
+            {
+                errorMessage = "Meter number already exists.";
+                return false;
+            }
+
+            // You can add more custom validations here later
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
     }
 }
