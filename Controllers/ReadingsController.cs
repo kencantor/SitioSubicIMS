@@ -262,7 +262,8 @@ namespace SitioSubicIMS.Web.Controllers
                             //string message = $"Dear customer, your meter reading of {reading.ReadingValue} on {DateTime.Now:yyyy-MM-dd HH:mm:ss} " +
                             //                 $"has been recorded. Consumption: {consumption} cubic meters. " +
                             //                 $"Amount due: {charge:C2}. Thank you. Reader: {readerName}";
-                            string message = $"TEST Reading: {reading.ReadingValue}. Cons: {consumption}m³, Due: {charge:C0}.";// Thanks, {readerName}.";
+                            string formattedCharge = "Php " + charge.ToString("N2");
+                            string message = $"Dear Consumer, here is your reading details: Reading Value - {reading.ReadingValue}. Consumption: {consumption}. Due: {formattedCharge}. Thanks, Field Reader: {readerName}. ";
 
                             bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
 

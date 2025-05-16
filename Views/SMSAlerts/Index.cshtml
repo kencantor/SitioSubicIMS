@@ -50,25 +50,25 @@
 
                 <div class="col-md-6">
                     <div class="form-floating mb-3">
-                        <input asp-for="Latest.TwilioAccountSID" class="form-control" placeholder="Twilio Account SID" />
-                        <label asp-for="Latest.TwilioAccountSID">Twilio Account SID</label>
-                        <span asp-validation-for="Latest.TwilioAccountSID" class="text-danger"></span>
+                        <input asp-for="Latest.APIKey" class="form-control" placeholder="API Key" />
+                        <label asp-for="Latest.APIKey">API Key</label>
+                        <span asp-validation-for="Latest.APIKey" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-floating mb-3">
-                        <input asp-for="Latest.TwilioAuthToken" class="form-control" placeholder="Twilio Auth Token" />
-                        <label asp-for="Latest.TwilioAuthToken">Twilio Auth Token</label>
-                        <span asp-validation-for="Latest.TwilioAuthToken" class="text-danger"></span>
+                        <input asp-for="Latest.Token" class="form-control" placeholder="Token" />
+                        <label asp-for="Latest.Token">Token</label>
+                        <span asp-validation-for="Latest.Token" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-floating mb-3">
-                        <input asp-for="Latest.TwilioFromPhoneNumber" class="form-control" placeholder="Twilio From Phone Number" />
-                        <label asp-for="Latest.TwilioFromPhoneNumber">Twilio From Phone Number</label>
-                        <span asp-validation-for="Latest.TwilioFromPhoneNumber" class="text-danger"></span>
+                        <input asp-for="Latest.Sender" class="form-control" placeholder="Sender" />
+                        <label asp-for="Latest.Sender">Sender</label>
+                        <span asp-validation-for="Latest.Sender" class="text-danger"></span>
                     </div>
                 </div>
             </div>
@@ -92,8 +92,9 @@
                         <th>Billing Alerts</th>
                         <th>Payment Alerts</th>
                         <th>Message Header</th>
-                        <th>Twilio SID</th>
-                        <th>From Number</th>
+                        <th>API Key</th>
+                        <th>Token</th>
+                        <th>Sender</th>
                         <th>Created By</th>
                         <th>Status</th>
                     </tr>
@@ -112,8 +113,9 @@
                                 <td>@(c.AllowBillingAlerts ? "Yes" : "No")</td>
                                 <td>@(c.AllowPaymentAlerts ? "Yes" : "No")</td>
                                 <td>@c.MessageHeader</td>
-                                <td>@c.TwilioAccountSID</td>
-                                <td>@c.TwilioFromPhoneNumber</td>
+                                <td>@c.APIKey</td>
+                                <td>@c.Token</td>
+                                <td>@c.Sender</td>
                                 <td>@c.CreatedBy</td>
                                 <td>
                                     @if (c.SMSAlertID == Model.Latest.SMSAlertID)

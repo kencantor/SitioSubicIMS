@@ -23,14 +23,14 @@ namespace SitioSubicIMS.Web.Models
         [Display(Name = "Message Header")]
         public string? MessageHeader { get; set; }
 
-        [Display(Name = "Twilio Account SID")]
-        public string? TwilioAccountSID { get; set; }
+        [Display(Name = "API Key")]
+        public string? APIKey { get; set; }
 
-        [Display(Name = "Twilio Auth Token")]
-        public string? TwilioAuthToken { get; set; }
+        [Display(Name = "Token")]
+        public string? Token { get; set; }
 
-        [Display(Name = "Twilio From Phone Number")]
-        public string? TwilioFromPhoneNumber { get; set; }
+        [Display(Name = "Sender")]
+        public string? Sender { get; set; }
 
         [Display(Name = "Date Created")]
         public DateTime DateCreated { get; set; } = DateTime.Now;

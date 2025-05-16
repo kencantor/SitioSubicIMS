@@ -68,9 +68,9 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                     latest.AllowBillingAlerts != input.AllowBillingAlerts ||
                     latest.AllowPaymentAlerts != input.AllowPaymentAlerts ||
                     latest.MessageHeader != input.MessageHeader ||
-                    latest.TwilioAccountSID != input.TwilioAccountSID ||
-                    latest.TwilioAuthToken != input.TwilioAuthToken ||
-                    latest.TwilioFromPhoneNumber != input.TwilioFromPhoneNumber;
+                    latest.APIKey != input.APIKey ||
+                    latest.Token != input.Token ||
+                    latest.Sender != input.Sender;
 
                 if (!isChanged)
                 {
@@ -95,9 +95,9 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                     AllowBillingAlerts = input.AllowBillingAlerts,
                     AllowPaymentAlerts = input.AllowPaymentAlerts,
                     MessageHeader = input.MessageHeader,
-                    TwilioAccountSID = input.TwilioAccountSID,
-                    TwilioAuthToken = input.TwilioAuthToken,
-                    TwilioFromPhoneNumber = input.TwilioFromPhoneNumber,
+                    APIKey = input.APIKey,
+                    Token = input.Token,
+                    Sender = input.Sender,
                     CreatedBy = currentUser,
                     DateCreated = DateTime.Now,
                     UpdatedBy = currentUser,

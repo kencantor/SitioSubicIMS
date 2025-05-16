@@ -1,96 +1,108 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@{
     ViewData["Title"] = "Dashboard";
 }
-
 <h5 class="mb-4">Sitio Subic Waterworks Integrated Management System</h5>
 
 <div class="row row-cols-3 row-cols-md-5 g-3">
-    <div class="col">
-        <a asp-controller="Accounts" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-person-lines-fill module-icon text-info"></i>
-                <div class="module-label small">Accounts</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Billing" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-receipt module-icon text-info"></i>
-                <div class="module-label small">Billing</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Payments" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-cash-coin module-icon text-info"></i>
-                <div class="module-label small">Payments</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Readings" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-clipboard-data module-icon text-info"></i>
-                <div class="module-label small">Readings</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Reports" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-bar-chart module-icon text-info"></i>
-                <div class="module-label small">Reports</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Meters" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-speedometer2 module-icon text-info"></i>
-                <div class="module-label small">Meters</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="SystemUsers" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-people module-icon text-info"></i>
-                <div class="module-label small">System Users</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="Configurations" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-gear module-icon text-info"></i>
-                <div class="module-label small">Configurations</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="SMSAlerts" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-envelope module-icon text-info"></i>
-                <div class="module-label small">SMS Alerts</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="AuditLogs" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-clipboard-check module-icon text-info"></i>
-                <div class="module-label small">Audit Logs</div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a asp-controller="SystemInfo" asp-action="Index" class="text-decoration-none">
-            <div class="module-tile">
-                <i class="bi bi-info-circle module-icon text-info"></i>
-                <div class="module-label small">System Info</div>
-            </div>
-        </a>
-    </div>
+
+    @if (User.IsInRole("Administrator") || User.IsInRole("Teller"))
+    {
+        <div class="col">
+            <a asp-controller="Billing" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-receipt module-icon text-info"></i>
+                    <div class="module-label small">Billing</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Payments" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-cash-coin module-icon text-info"></i>
+                    <div class="module-label small">Payments</div>
+                </div>
+            </a>
+        </div>
+    }
+
+    @if (User.IsInRole("Administrator") || User.IsInRole("Reader"))
+    {
+        <div class="col">
+            <a asp-controller="Readings" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-clipboard-data module-icon text-info"></i>
+                    <div class="module-label small">Readings</div>
+                </div>
+            </a>
+        </div>
+    }
+
+    @if (User.IsInRole("Administrator"))
+    {
+        <div class="col">
+            <a asp-controller="Accounts" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-person-lines-fill module-icon text-info"></i>
+                    <div class="module-label small">Accounts</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Reports" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-bar-chart module-icon text-info"></i>
+                    <div class="module-label small">Reports</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Meters" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-speedometer2 module-icon text-info"></i>
+                    <div class="module-label small">Meters</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="SystemUsers" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-people module-icon text-info"></i>
+                    <div class="module-label small">System Users</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Configurations" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-gear module-icon text-info"></i>
+                    <div class="module-label small">Configurations</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="SMSAlerts" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-envelope module-icon text-info"></i>
+                    <div class="module-label small">SMS Alerts</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="AuditLogs" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-clipboard-check module-icon text-info"></i>
+                    <div class="module-label small">Audit Logs</div>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="SystemInfo" asp-action="Index" class="text-decoration-none">
+                <div class="module-tile">
+                    <i class="bi bi-info-circle module-icon text-info"></i>
+                    <div class="module-label small">System Info</div>
+                </div>
+            </a>
+        </div>
+    }
 </div>

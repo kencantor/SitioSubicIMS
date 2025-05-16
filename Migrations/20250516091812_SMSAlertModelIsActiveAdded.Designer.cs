@@ -511,13 +511,13 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Property<string>("MessageHeader")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TwilioAccountSID")
+                    b.Property<string>("APIKey")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TwilioAuthToken")
+                    b.Property<string>("Token")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TwilioFromPhoneNumber")
+                    b.Property<string>("Sender")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")

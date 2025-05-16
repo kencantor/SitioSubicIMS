@@ -206,7 +206,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasIndex("MeterID");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.ApplicationUser", b =>
@@ -331,7 +331,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Configuration", b =>
@@ -369,7 +369,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("ConfigurationID");
 
-                    b.ToTable("Configurations");
+                    b.ToTable("Configurations", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Meter", b =>
@@ -415,7 +415,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("MeterID");
 
-                    b.ToTable("Meters");
+                    b.ToTable("Meters", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Reading", b =>
@@ -470,7 +470,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Readings");
+                    b.ToTable("Readings", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.SMSAlert", b =>
@@ -480,6 +480,9 @@ namespace SitioSubicIMS.Web.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SMSAlertID"));
+
+                    b.Property<string>("APIKey")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("AllowBillingAlerts")
                         .HasColumnType("bit");
@@ -508,13 +511,10 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Property<string>("MessageHeader")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TwilioAccountSID")
+                    b.Property<string>("Sender")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TwilioAuthToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TwilioFromPhoneNumber")
+                    b.Property<string>("Token")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
@@ -522,7 +522,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("SMSAlertID");
 
-                    b.ToTable("SMSAlerts");
+                    b.ToTable("SMSAlerts", (string)null);
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.SMSLog", b =>
@@ -558,7 +558,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("SMSLogID");
 
-                    b.ToTable("SMSLogs");
+                    b.ToTable("SMSLogs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
