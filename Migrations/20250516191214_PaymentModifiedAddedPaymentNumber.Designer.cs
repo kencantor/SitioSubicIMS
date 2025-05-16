@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SitioSubicIMS.Web.Data;
 
@@ -11,9 +12,11 @@ using SitioSubicIMS.Web.Data;
 namespace SitioSubicIMS.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516191214_PaymentModifiedAddedPaymentNumber")]
+    partial class PaymentModifiedAddedPaymentNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -502,7 +505,13 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Property<int>("BillingID")
                         .HasColumnType("int");
 
+                    b.Property<string>("BillingNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("CreatedBy")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -518,19 +527,16 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
 
-                    b.Property<string>("PaymentNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("ReferenceNumber")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("UpdatedBy")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -763,7 +769,7 @@ namespace SitioSubicIMS.Web.Migrations
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Payment", b =>
                 {
                     b.HasOne("Billing", "Billing")
-                        .WithMany("Payments")
+                        .WithMany()
                         .HasForeignKey("BillingID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -786,11 +792,6 @@ namespace SitioSubicIMS.Web.Migrations
                     b.Navigation("Meter");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Billing", b =>
-                {
-                    b.Navigation("Payments");
                 });
 #pragma warning restore 612, 618
         }

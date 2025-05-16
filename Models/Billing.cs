@@ -86,4 +86,5 @@ public class Billing
 
     [NotMapped]
     public decimal OverDueAmount => DueAmount + Penalty;
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

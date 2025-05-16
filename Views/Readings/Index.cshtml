@@ -57,7 +57,7 @@
                         }
                     </td>
                     <td>@reading.DateCreated.ToString("yyyy-MM-dd")</td>
-                    @if (reading.IsBilled)
+                    @if (!reading.IsBilled)
                     {
                         <td>
                             <a href="@Url.Action("Edit", "Readings", new { id = reading.ReadingId })" class="btn btn-sm btn-primary" title="Edit">

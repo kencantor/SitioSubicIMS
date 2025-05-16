@@ -1,33 +1,32 @@
-﻿@model List<SitioSubicIMS.Web.Models.ViewModels.BillingViewModel>
+﻿@model List<SitioSubicIMS.Web.Models.ViewModels.PaymentViewModel>
 
 @{
-    ViewData["Title"] = "Billing Records";
+    ViewData["Title"] = "Payment Records";
 }
 
-<h4>Billing Records</h4>
+<h4>Payment Records</h4>
 
-<div class="d-flex justify-content-end align-items-center mb-3">
-    <div class="input-group" style="width: 250px;">
-        <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search billings..." />
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="@Url.Action("PaymentForm", "Payments")" class="btn btn-success" title="Add Payment">
+        <i class="bi bi-plus-lg"></i>
+    </a>
+
+    <div class="input-group" style="width: 300px;">
+        <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search readings..." />
         <span class="input-group-text"><i class="bi bi-search"></i></span>
     </div>
 </div>
 
 <div class="table-responsive">
-    <table id="billingTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
+    <table id="paymentTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
         <thead class="table-dark">
             <tr>
+                <th>Payment #</th>
                 <th>Billing #</th>
                 <th>Account</th>
-                <th>Prev</th>
-                <th>Curr</th>
-                <th>Cons</th>
-                <th>Due Date</th>
-                <th>Penalty</th>
-                <th>VAT</th>
-                <th>Arrears</th>
-                <th>Due Amt</th>
-                <th>Overdue Amt</th>
+                <th>Amount Paid</th>
+                <th>Payment Date</th>
+                <th>Payment Method</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -35,48 +34,47 @@
         <tbody>
             @foreach (var item in Model)
             {
+                var payment = item.Payment;
                 var billing = item.Billing;
                 var account = item.Account;
-                var meter = item.Meter;
 
                 <tr>
-                    <td>@billing.BillingNumber</td>
+                    <td>@payment.PaymentNumber</td>
+                    <td>@payment.Billing.BillingNumber</td>
                     <td>@account?.AccountName</td>
-                    <td>@billing.Reading.PreviousReadingValue.ToString("N0")</td>
-                    <td>@billing.Reading.ReadingValue.ToString("N0")</td>
-                    <td>@billing.Reading.Consumption.ToString("N0")</td>
-                    <td>@billing.DueDate.ToString("yyyy-MM-dd")</td>
-                    <td>@billing.Penalty.ToString("N2")</td>
-                    <td>@billing.VATAmount.ToString("N2")</td>
-                    <td>@billing.Arrears.ToString("N2")</td>
-                    <td>@billing.DueAmount.ToString("N2")</td>
-                    <td>@billing.OverDueAmount.ToString("N2")</td>
+                    <td>@payment.AmountPaid.ToString("N2")</td>
+                    <td>@payment.PaymentDate.ToString("yyyy-MM-dd")</td>
+                    <td>@payment.PaymentMethod</td>
                     <td>
-                        @if (billing.BillingStatus == BillingStatus.Paid)
+                        @if (payment.PaymentStatus == PaymentStatus.Posted)
                         {
-                            <span class="badge bg-success">Paid</span>
+                            <span class="badge bg-success">Posted</span>
+                        }
+                        else if (payment.PaymentStatus == PaymentStatus.Unposted)
+                        {
+                            <span class="badge bg-warning text-dark">Unposted</span>
                         }
                         else
                         {
-                            <span class="badge bg-warning text-dark">@billing.BillingStatus.ToString()</span>
+                            <span class="badge bg-secondary">@payment.PaymentStatus.ToString()</span>
                         }
                     </td>
                     <td>
-                        @if (billing.BillingStatus == BillingStatus.Pending)
+                        @if (payment.PaymentStatus != PaymentStatus.Posted)
                         {
                             <button type="button"
                                     class="btn btn-sm btn-success me-1"
-                                    title="Confirm Billing"
+                                    title="Confirm Payment"
                                     data-bs-toggle="modal"
                                     data-bs-target="#confirmModal"
-                                    data-billing-id="@billing.BillingID">
+                                    data-payment-id="@payment.PaymentID">
                                 <i class="bi bi-check-circle"></i>
                             </button>
                         }
-                        <a asp-action="View"
-                           asp-route-id="@billing.BillingID"
+                        <a asp-action="Details"
+                           asp-route-id="@payment.PaymentID"
                            class="btn btn-sm btn-primary"
-                           title="View Billing Details">
+                           title="View Payment Details">
                             <i class="bi bi-eye"></i>
                         </a>
                     </td>
@@ -92,24 +90,24 @@
         <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
     </nav>
 </div>
+
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="confirmModalLabel">Confirm Billing</h5>
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Payment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to confirm this billing?
+                Are you sure you want to confirm this payment?
             </div>
             <div class="modal-footer">
                 <form id="confirmForm" method="post" asp-action="Confirm">
-                    <input type="hidden" id="billingIdInput" name="id" />
+                    <input type="hidden" id="paymentIdInput" name="id" />
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-warning">Yes, Confirm</button>
                 </form>
-
             </div>
         </div>
     </div>
@@ -119,25 +117,20 @@
     <script>
         var confirmModal = document.getElementById('confirmModal');
         confirmModal.addEventListener('show.bs.modal', function (event) {
-            // Button that triggered the modal
             var button = event.relatedTarget;
-            // Extract info from data-* attributes
-            var billingId = button.getAttribute('data-billing-id');
+            var paymentId = button.getAttribute('data-payment-id');
 
-            // Update the modal's form input and action
-            var billingIdInput = confirmModal.querySelector('#billingIdInput');
-            billingIdInput.value = billingId;
+            var paymentIdInput = confirmModal.querySelector('#paymentIdInput');
+            paymentIdInput.value = paymentId;
 
             var form = confirmModal.querySelector('#confirmForm');
-            // Set form action dynamically to the Confirm action with id parameter
-            form.action = `/Billings/Confirm/${billingId}`;
-            // Replace 'YourControllerName' with your actual controller route if needed
+            form.action = `/Payments/Confirm/${paymentId}`;
         });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const searchBox = document.getElementById('searchBox');
-            const table = document.getElementById('billingTable');
+            const table = document.getElementById('paymentTable');
             const tbody = table.querySelector('tbody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
             const pageSize = 10;
@@ -158,7 +151,7 @@
                 paginationList.innerHTML = '';
 
                 if (totalPages === 0) {
-                    recordCount.textContent = 'No billing records found.';
+                    recordCount.textContent = 'No payment records found.';
                     return;
                 }
 
