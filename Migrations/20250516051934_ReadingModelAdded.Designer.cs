@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SitioSubicIMS.Web.Data;
 
@@ -11,9 +12,11 @@ using SitioSubicIMS.Web.Data;
 namespace SitioSubicIMS.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516051934_ReadingModelAdded")]
+    partial class ReadingModelAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,7 +209,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasIndex("MeterID");
 
-                    b.ToTable("Accounts", (string)null);
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.ApplicationUser", b =>
@@ -331,7 +334,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Configuration", b =>
@@ -369,7 +372,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("ConfigurationID");
 
-                    b.ToTable("Configurations", (string)null);
+                    b.ToTable("Configurations");
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Meter", b =>
@@ -415,7 +418,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasKey("MeterID");
 
-                    b.ToTable("Meters", (string)null);
+                    b.ToTable("Meters");
                 });
 
             modelBuilder.Entity("SitioSubicIMS.Web.Models.Reading", b =>
@@ -471,7 +474,7 @@ namespace SitioSubicIMS.Web.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("Readings", (string)null);
+                    b.ToTable("Readings");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

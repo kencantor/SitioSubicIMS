@@ -1,0 +1,118 @@
+﻿@model SitioSubicIMS.Web.Models.Reading
+
+@{
+    bool isEdit = Model.ReadingID != 0;
+    ViewData["Title"] = isEdit ? "Edit Reading" : "Add Reading";
+    int currentYear = DateTime.Now.Year;
+    int currentMonth = DateTime.Now.Month;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<form asp-action="Save" method="post" class="needs-validation" novalidate>
+    <input type="hidden" asp-for="ReadingID" />
+
+    <div class="row g-3">
+        <!-- Meter Dropdown -->
+        <div class="col-md-6 col-lg-4">
+            <div class="form-floating">
+                <select asp-for="MeterID" class="form-select" asp-items="@(ViewBag.Meters as List<SelectListItem>)">
+                    <option value="">-- Select Meter --</option>
+                </select>
+                <label asp-for="MeterID">Meter</label>
+                <span asp-validation-for="MeterID" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Reading Date -->
+        <div class="col-md-6 col-lg-2">
+            <div class="form-floating">
+                <input asp-for="ReadingDate" type="date" class="form-control"
+                       value="@(isEdit ? Model.ReadingDate.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))" />
+                <label asp-for="ReadingDate">Reading Date</label>
+                <span asp-validation-for="ReadingDate" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Reading Value -->
+        <div class="col-md-6 col-lg-2">
+            <div class="form-floating">
+                <input asp-for="ReadingValue" type="number" step="any" class="form-control" placeholder="Reading Value" />
+                <label asp-for="ReadingValue">Reading Value</label>
+                <span asp-validation-for="ReadingValue" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Billing Month -->
+        <div class="col-md-3 col-lg-2">
+            <div class="form-floating">
+                <select asp-for="BillingMonth" class="form-select">
+                    <option value="">-- Month --</option>
+                    @{
+                        var months = System.Globalization.DateTimeFormatInfo.InvariantInfo.MonthNames;
+                        for (int i = 1; i <= 12; i++)
+                        {
+                            bool isSelected = false;
+
+                            if (isEdit)
+                            {
+                                isSelected = (Model.BillingMonth == i);
+                            }
+                            else
+                            {
+                                isSelected = (currentMonth == i);
+                            }
+
+                            <option value="@i" selected="@(isSelected ? "selected" : null)">
+                                @months[i - 1]
+                            </option>
+                            ;
+                        }
+                    }
+                </select>
+                <label asp-for="BillingMonth">Billing Month</label>
+                <span asp-validation-for="BillingMonth" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Billing Year -->
+        <div class="col-md-3 col-lg-2">
+            <div class="form-floating">
+                <select asp-for="BillingYear" class="form-select">
+                    <option value="">-- Year --</option>
+                    @{
+                        for (int year = 2000; year <= 2100; year++)
+                        {
+                            bool isSelected = false;
+
+                            if (isEdit)
+                            {
+                                isSelected = (Model.BillingYear == year);
+                            }
+                            else
+                            {
+                                isSelected = (currentYear == year);
+                            }
+
+                            <option value="@year" selected="@(isSelected ? "selected" : null)">
+                                @year
+                            </option>
+                            ;
+                        }
+                    }
+                </select>
+                <label asp-for="BillingYear">Billing Year</label>
+                <span asp-validation-for="BillingYear" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">@ViewData["Title"]</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

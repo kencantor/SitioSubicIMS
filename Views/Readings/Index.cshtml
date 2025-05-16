@@ -1,0 +1,212 @@
+﻿@model List<SitioSubicIMS.Web.Models.ViewModels.ReadingListItemViewModel>
+
+@{
+    ViewData["Title"] = "Readings";
+}
+
+<h4>Reading Management</h4>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="@Url.Action("Create", "Readings")" class="btn btn-success" title="Add New Reading">
+        <i class="bi bi-plus-lg"></i>
+    </a>
+
+    <div class="input-group" style="width: 300px;">
+        <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search readings..." />
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="readingTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
+        <thead class="table-dark">
+            <tr>
+                <th>Account</th>
+                <th>Meter #</th>
+                <th>Reading Date</th>
+                <th>Previous Reading</th>
+                <th>Current Reading</th>
+                <th>Consumption</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reading in Model)
+            {
+                <tr class="reading-row @(reading.IsActive ? "" : "table-secondary")"
+                    data-reading-id="@reading.ReadingId"
+                    data-account-number="@reading.AccountNumber">
+                    <td>@reading.AccountNumber</td>
+                    <td>@reading.MeterNumber</td>
+                    <td>@reading.ReadingDate.ToString("yyyy-MM-dd")</td>
+                    <td>@reading.PreviousReading</td>
+                    <td>@reading.CurrentReading</td>
+                    <td>@reading.Consumption</td>
+                    <td>
+                        @if (reading.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td>@reading.DateCreated.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <a href="@Url.Action("Edit", "Readings", new { id = reading.ReadingId })" class="btn btn-sm btn-primary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger ms-1 btn-delete" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="paginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+    <small id="paginationInfo" class="text-muted mb-2"></small>
+    <nav>
+        <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+    </nav>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="deleteForm" method="post" asp-controller="Readings" asp-action="ConfirmDelete">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="deleteReadingId" />
+                    <p>Are you sure you want to delete the reading for account <strong id="deleteAccountNumber"></strong> dated <strong id="deleteReadingDate"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchBox = document.getElementById('searchBox');
+        const table = document.getElementById('readingTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const pageSize = 10;
+        let currentPage = 1;
+        let filteredRows = rows;
+
+        const recordCount = document.getElementById('paginationInfo');
+        const paginationList = document.getElementById('pagination');
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredRows.length / pageSize);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+
+            rows.forEach(row => row.style.display = 'none');
+            filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                        .forEach(row => row.style.display = '');
+
+            paginationList.innerHTML = '';
+
+            if (totalPages === 0) {
+                recordCount.textContent = 'No readings found.';
+                return;
+            }
+
+            const startItem = (currentPage - 1) * pageSize + 1;
+            const endItem = Math.min(currentPage * pageSize, filteredRows.length);
+            recordCount.textContent = `Showing ${startItem} to ${endItem} of ${filteredRows.length} readings`;
+
+            function addPageItem(page, text = null, isActive = false, isDisabled = false) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+                li.innerHTML = `<a class="page-link" href="#">${text || page}</a>`;
+                if (!isDisabled) {
+                    li.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentPage = page;
+                        renderPagination();
+                    });
+                }
+                paginationList.appendChild(li);
+            }
+
+            addPageItem(currentPage - 1, 'Previous', false, currentPage === 1);
+
+            const maxPagesToShow = 5;
+            if (totalPages <= maxPagesToShow + 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    addPageItem(i, null, i === currentPage);
+                }
+            } else {
+                addPageItem(1, '1', currentPage === 1);
+
+                if (currentPage > 3) {
+                    const ellipsis = document.createElement('li');
+                    ellipsis.className = 'page-item disabled';
+                    ellipsis.innerHTML = '<span class="page-link">...</span>';
+                    paginationList.appendChild(ellipsis);
+                }
+
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                for (let i = start; i <= end; i++) {
+                    addPageItem(i, null, i === currentPage);
+                }
+
+                if (currentPage < totalPages - 2) {
+                    const ellipsis = document.createElement('li');
+                    ellipsis.className = 'page-item disabled';
+                    ellipsis.innerHTML = '<span class="page-link">...</span>';
+                    paginationList.appendChild(ellipsis);
+                }
+
+                addPageItem(totalPages, totalPages.toString(), currentPage === totalPages);
+            }
+
+            addPageItem(currentPage + 1, 'Next', false, currentPage === totalPages);
+        }
+
+        function filterRows() {
+            const term = searchBox.value.trim().toLowerCase();
+            filteredRows = rows.filter(r => r.textContent.toLowerCase().includes(term));
+            currentPage = 1;
+            renderPagination();
+        }
+
+        searchBox.addEventListener('input', filterRows);
+        filterRows();
+
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+        const deleteReadingIdInput = document.getElementById('deleteReadingId');
+        const deleteAccountNumberText = document.getElementById('deleteAccountNumber');
+        const deleteReadingDateText = document.getElementById('deleteReadingDate');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tr = button.closest('tr');
+                const readingId = tr.getAttribute('data-reading-id');
+                const accNum = tr.getAttribute('data-account-number');
+                const readingDate = tr.querySelector('td:nth-child(3)').textContent;
+
+                deleteReadingIdInput.value = readingId;
+                deleteAccountNumberText.textContent = accNum;
+                deleteReadingDateText.textContent = readingDate;
+            });
+        });
+    });
+</script>
