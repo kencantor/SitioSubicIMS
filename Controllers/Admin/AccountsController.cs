@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SitioSubicIMS.Web.Controllers.Admin
 {
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,Teller")]
     public class AccountsController : Controller
     {
         private readonly ApplicationDbContext _context;
