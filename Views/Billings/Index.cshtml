@@ -64,14 +64,15 @@
                     <td>
                         @if (billing.BillingStatus == BillingStatus.Pending)
                         {
-                            <a asp-action="Confirm"
-                               asp-route-id="@billing.BillingID"
-                               class="btn btn-sm btn-success me-1"
-                               title="Confirm Billing">
+                            <button type="button"
+                                    class="btn btn-sm btn-success me-1"
+                                    title="Confirm Billing"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmModal"
+                                    data-billing-id="@billing.BillingID">
                                 <i class="bi bi-check-circle"></i>
-                            </a>
+                            </button>
                         }
-
                         <a asp-action="View"
                            asp-route-id="@billing.BillingID"
                            class="btn btn-sm btn-primary"
@@ -91,8 +92,48 @@
         <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
     </nav>
 </div>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Billing</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to mark this billing as <strong>Unpaid</strong>?
+            </div>
+            <div class="modal-footer">
+                <form id="confirmForm" method="post" asp-action="Confirm">
+                    <input type="hidden" id="billingIdInput" name="id" />
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Yes, Confirm</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
+    <script>
+        var confirmModal = document.getElementById('confirmModal');
+        confirmModal.addEventListener('show.bs.modal', function (event) {
+            // Button that triggered the modal
+            var button = event.relatedTarget;
+            // Extract info from data-* attributes
+            var billingId = button.getAttribute('data-billing-id');
+
+            // Update the modal's form input and action
+            var billingIdInput = confirmModal.querySelector('#billingIdInput');
+            billingIdInput.value = billingId;
+
+            var form = confirmModal.querySelector('#confirmForm');
+            // Set form action dynamically to the Confirm action with id parameter
+            form.action = `/Billings/Confirm/${billingId}`;
+            // Replace 'YourControllerName' with your actual controller route if needed
+        });
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const searchBox = document.getElementById('searchBox');

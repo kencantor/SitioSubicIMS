@@ -110,7 +110,8 @@ namespace SitioSubicIMS.Web.Controllers
                     DateCreated = reading.DateCreated,
                     IsActive = reading.IsActive,
                     BillingMonth = reading.BillingMonth,
-                    BillingYear = reading.BillingYear
+                    BillingYear = reading.BillingYear,
+                    IsBilled = reading.IsBilled
                 });
                 readingList = readingList
                     .OrderByDescending(r => r.BillingYear)

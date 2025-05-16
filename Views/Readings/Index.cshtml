@@ -57,14 +57,17 @@
                         }
                     </td>
                     <td>@reading.DateCreated.ToString("yyyy-MM-dd")</td>
-                    <td>
-                        <a href="@Url.Action("Edit", "Readings", new { id = reading.ReadingId })" class="btn btn-sm btn-primary" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <button class="btn btn-sm btn-danger ms-1 btn-delete" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
+                    @if (reading.IsBilled)
+                    {
+                        <td>
+                            <a href="@Url.Action("Edit", "Readings", new { id = reading.ReadingId })" class="btn btn-sm btn-primary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger ms-1 btn-delete" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    }
                 </tr>
             }
         </tbody>

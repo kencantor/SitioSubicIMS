@@ -14,6 +14,7 @@
         public bool IsActive { get; set; }
         public int BillingMonth { get; set; }
         public int BillingYear { get; set; }
+        public bool IsBilled { get; set; }
 
         public string BillingPeriod => $"{System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(BillingMonth)} {BillingYear}";
     }
