@@ -39,22 +39,41 @@ namespace SitioSubicIMS.Web.Controllers.Admin
         [HttpGet]
         public IActionResult Create()
         {
+            // Get only meters that are not tied to any active account
+            var assignedMeterIds = _context.Accounts
+                .Where(a => a.IsActive && a.MeterID != null)
+                .Select(a => a.MeterID)
+                .ToList();
 
-            ViewBag.MeterList = new SelectList(_context.Meters, "MeterID", "MeterNumber");
+            var availableMeters = _context.Meters
+                .Where(m => m.IsActive && !assignedMeterIds.Contains(m.MeterID))
+                .ToList();
+
+            ViewBag.MeterList = new SelectList(availableMeters, "MeterID", "MeterNumber");
             return View("AccountForm", new Account());
         }
 
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-
-            ViewBag.MeterList = new SelectList(_context.Meters, "MeterID", "MeterNumber");
             var account = await _context.Accounts.FindAsync(id);
             if (account == null || !account.IsActive)
             {
                 TempData["Error"] = "Account not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // Get meters not tied to any other active account
+            var assignedMeterIds = _context.Accounts
+                .Where(a => a.IsActive && a.MeterID != null && a.AccountID != id)
+                .Select(a => a.MeterID)
+                .ToList();
+
+            var availableMeters = _context.Meters
+                .Where(m => m.IsActive && (!assignedMeterIds.Contains(m.MeterID) || m.MeterID == account.MeterID))
+                .ToList();
+
+            ViewBag.MeterList = new SelectList(availableMeters, "MeterID", "MeterNumber", account.MeterID);
             return View("AccountForm", account);
         }
 
