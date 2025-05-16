@@ -96,7 +96,7 @@ namespace SitioSubicIMS.Web.Controllers
                 readingList.Add(new ReadingListItemViewModel
                 {
                     ReadingId = reading.ReadingID,
-                    AccountNumber = account?.AccountNumber + " - " + account.AccountName ?? "N/A",
+                    AccountNumber = account.AccountName + " - " + account?.AccountNumber ?? "N/A",
                     MeterNumber = meter.MeterNumber,
                     ReadingDate = reading.ReadingDate,
                     PreviousReading = previousReadingValue,
@@ -104,8 +104,15 @@ namespace SitioSubicIMS.Web.Controllers
                     Consumption = consumption,
                     Status = reading.IsActive ? "Active" : "Inactive",
                     DateCreated = reading.DateCreated,
-                    IsActive = reading.IsActive
+                    IsActive = reading.IsActive,
+                    BillingMonth = reading.BillingMonth,
+                    BillingYear = reading.BillingYear
                 });
+                readingList = readingList
+                    .OrderByDescending(r => r.BillingYear)
+                    .ThenByDescending(r => r.BillingMonth)
+                    .ThenBy(r => r.AccountNumber)
+                    .ToList();
             }
 
             return View(readingList);
@@ -168,7 +175,8 @@ namespace SitioSubicIMS.Web.Controllers
                     reading.CreatedBy = currentUser;
 
                     _context.Readings.Add(reading);
-                    await _auditLogger.LogAsync("Reading", $"Created new reading for Meter # {reading.Meter.MeterNumber}", currentUser);
+                    var meter = await _context.Meters.FindAsync(reading.MeterID);
+                    await _auditLogger.LogAsync("Reading", $"Created new reading for Meter # {meter.MeterNumber}", currentUser);
                 }
                 else
                 {

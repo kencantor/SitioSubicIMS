@@ -23,6 +23,7 @@
             <tr>
                 <th>Account</th>
                 <th>Meter #</th>
+                <th>Period</th>
                 <th>Reading Date</th>
                 <th>Previous Reading</th>
                 <th>Current Reading</th>
@@ -40,6 +41,7 @@
                     data-account-number="@reading.AccountNumber">
                     <td>@reading.AccountNumber</td>
                     <td>@reading.MeterNumber</td>
+                    <td>@reading.BillingPeriod</td>
                     <td>@reading.ReadingDate.ToString("yyyy-MM-dd")</td>
                     <td>@reading.PreviousReading</td>
                     <td>@reading.CurrentReading</td>

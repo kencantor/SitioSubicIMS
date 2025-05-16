@@ -9,14 +9,14 @@
 
 <h4>@ViewData["Title"]</h4>
 
-<form asp-action="Save" method="post" class="needs-validation" novalidate>
+<form id="readingForm" asp-action="Save" method="post" class="needs-validation" novalidate>
     <input type="hidden" asp-for="ReadingID" />
 
     <div class="row g-3">
         <!-- Meter Dropdown -->
         <div class="col-md-6 col-lg-4">
             <div class="form-floating">
-                <select asp-for="MeterID" class="form-select" asp-items="@(ViewBag.Meters as List<SelectListItem>)">
+                <select asp-for="MeterID" class="form-select" asp-items="@(ViewBag.Meters as List<SelectListItem>)" id="MeterID">
                     <option value="">-- Select Meter --</option>
                 </select>
                 <label asp-for="MeterID">Meter</label>
@@ -28,7 +28,7 @@
         <div class="col-md-6 col-lg-2">
             <div class="form-floating">
                 <input asp-for="ReadingDate" type="date" class="form-control"
-                       value="@(isEdit ? Model.ReadingDate.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))" />
+                       value="@(isEdit ? Model.ReadingDate.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))" id="ReadingDate" />
                 <label asp-for="ReadingDate">Reading Date</label>
                 <span asp-validation-for="ReadingDate" class="text-danger"></span>
             </div>
@@ -37,7 +37,7 @@
         <!-- Reading Value -->
         <div class="col-md-6 col-lg-2">
             <div class="form-floating">
-                <input asp-for="ReadingValue" type="number" step="any" class="form-control" placeholder="Reading Value" />
+                <input asp-for="ReadingValue" type="number" step="any" class="form-control" placeholder="Reading Value" id="ReadingValue" />
                 <label asp-for="ReadingValue">Reading Value</label>
                 <span asp-validation-for="ReadingValue" class="text-danger"></span>
             </div>
@@ -46,23 +46,13 @@
         <!-- Billing Month -->
         <div class="col-md-3 col-lg-2">
             <div class="form-floating">
-                <select asp-for="BillingMonth" class="form-select">
+                <select asp-for="BillingMonth" class="form-select" id="BillingMonth">
                     <option value="">-- Month --</option>
                     @{
                         var months = System.Globalization.DateTimeFormatInfo.InvariantInfo.MonthNames;
                         for (int i = 1; i <= 12; i++)
                         {
-                            bool isSelected = false;
-
-                            if (isEdit)
-                            {
-                                isSelected = (Model.BillingMonth == i);
-                            }
-                            else
-                            {
-                                isSelected = (currentMonth == i);
-                            }
-
+                            bool isSelected = isEdit ? (Model.BillingMonth == i) : (currentMonth == i);
                             <option value="@i" selected="@(isSelected ? "selected" : null)">
                                 @months[i - 1]
                             </option>
@@ -78,22 +68,12 @@
         <!-- Billing Year -->
         <div class="col-md-3 col-lg-2">
             <div class="form-floating">
-                <select asp-for="BillingYear" class="form-select">
+                <select asp-for="BillingYear" class="form-select" id="BillingYear">
                     <option value="">-- Year --</option>
                     @{
                         for (int year = 2000; year <= 2100; year++)
                         {
-                            bool isSelected = false;
-
-                            if (isEdit)
-                            {
-                                isSelected = (Model.BillingYear == year);
-                            }
-                            else
-                            {
-                                isSelected = (currentYear == year);
-                            }
-
+                            bool isSelected = isEdit ? (Model.BillingYear == year) : (currentYear == year);
                             <option value="@year" selected="@(isSelected ? "selected" : null)">
                                 @year
                             </option>
@@ -108,11 +88,60 @@
     </div>
 
     <div class="mt-4">
-        <button type="submit" class="btn btn-primary">@ViewData["Title"]</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmReading">@ViewData["Title"]</button>
         <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
     </div>
 </form>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Reading Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Meter:</strong> <span id="modalMeter"></span></p>
+                <p><strong>Reading Date:</strong> <span id="modalDate"></span></p>
+                <p><strong>Reading Value:</strong> <span id="modalValue"></span></p>
+                <p><strong>Billing Month:</strong> <span id="modalMonth"></span></p>
+                <p><strong>Billing Year:</strong> <span id="modalYear"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="modalSubmit">Confirm and Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.getElementById("btnConfirmReading").addEventListener("click", function () {
+            // Get selected values
+            const meterDropdown = document.getElementById("MeterID");
+            const meterText = meterDropdown.options[meterDropdown.selectedIndex]?.text ?? "";
+
+            document.getElementById("modalMeter").textContent = meterText;
+            document.getElementById("modalDate").textContent = document.getElementById("ReadingDate").value;
+            document.getElementById("modalValue").textContent = document.getElementById("ReadingValue").value;
+
+            const billingMonth = document.getElementById("BillingMonth");
+            document.getElementById("modalMonth").textContent = billingMonth.options[billingMonth.selectedIndex]?.text ?? "";
+
+            const billingYear = document.getElementById("BillingYear");
+            document.getElementById("modalYear").textContent = billingYear.value;
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+            modal.show();
+        });
+
+        document.getElementById("modalSubmit").addEventListener("click", function () {
+            document.getElementById("readingForm").submit();
+        });
+    </script>
 }
