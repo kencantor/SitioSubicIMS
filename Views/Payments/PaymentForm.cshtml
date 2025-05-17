@@ -22,7 +22,7 @@
                     {
                         <option value="@item.Billing.BillingID"
                                 selected="@(item.Billing.BillingID == Model.NewPayment.BillingID ? "selected" : null)">
-                            @item.Account.AccountName - @item.Billing.DueDate.ToShortDateString() - ₱@item.Billing.DueAmount.ToString("N2")
+                            @item.Account.AccountName - @item.Billing.BillingNumber | @item.Billing.DueDate.ToShortDateString() - ₱@item.Billing.DueAmount.ToString("N2")
                         </option>
                     }
                 </select>

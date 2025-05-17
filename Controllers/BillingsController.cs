@@ -25,42 +25,52 @@ namespace SitioSubicIMS.Web.Controllers
             _auditLogger = auditLogger;
             _smsService = smsService;
         }
+
         public async Task<IActionResult> Index()
         {
+            // Load active billings with readings and meters
             var billings = await _context.Billings
                 .Where(b => b.IsActive)
                 .Include(b => b.Reading)
                     .ThenInclude(r => r.Meter)
-                .Select(b => new BillingViewModel
-                {
-                    Billing = b,
-                    Account = _context.Accounts
-                        .Where(a => a.IsActive && a.MeterID == b.Reading.MeterID)
-                        .FirstOrDefault()
-                })
-                .OrderByDescending(b => b.Billing.BillingDate)
                 .AsNoTracking()
                 .ToListAsync();
 
-            return View(billings);
+            // Load active accounts to avoid subqueries in projection
+            var accounts = await _context.Accounts
+                .Where(a => a.IsActive)
+                .ToListAsync();
+
+            // Map billings to view models with related accounts
+            var billingViewModels = billings
+                .Select(b => new BillingViewModel
+                {
+                    Billing = b,
+                    Account = accounts.FirstOrDefault(a => a.MeterID == b.Reading.MeterID)
+                })
+                .OrderByDescending(b => b.Billing.BillingDate)
+                .ToList();
+
+            return View(billingViewModels);
         }
 
         [HttpPost]
         public async Task<IActionResult> Confirm(int id)
         {
-            var currentUser = User.Identity?.Name ?? "System";
+            var currentUser = User.FindFirstValue(ClaimTypes.Name) ?? "System";
+
             try
             {
+                // Load billing with related reading and meter
                 var billing = await _context.Billings
                     .Include(b => b.Reading)
                     .ThenInclude(r => r.Meter)
                     .FirstOrDefaultAsync(b => b.BillingID == id);
 
                 if (billing == null)
-                {
                     return NotFound();
-                }
 
+                // Update billing status and properties
                 billing.DateUpdated = DateTime.Now;
                 billing.UpdatedBy = currentUser;
                 billing.BillingStatus = BillingStatus.Unpaid;
@@ -68,86 +78,85 @@ namespace SitioSubicIMS.Web.Controllers
 
                 _context.Update(billing);
                 await _context.SaveChangesAsync();
+
                 await _auditLogger.LogAsync("Billing", $"Updated Billing # {billing.BillingNumber}", currentUser);
+
                 TempData["Message"] = "Billing confirmed.";
 
-                // SMS ALERT
+                // Proceed to send SMS alert if configured
                 var config = await _context.SMSAlerts
                     .Where(c => c.IsActive)
                     .OrderByDescending(c => c.DateCreated)
                     .FirstOrDefaultAsync();
 
-                if (config != null && config.AllowSMSAlerts && config.AllowBillingAlerts)
+                if (config == null || !config.AllowSMSAlerts || !config.AllowBillingAlerts)
                 {
-                    var sysconfig = await _context.Configurations
-                        .Where(s => s.IsActive)
-                        .FirstOrDefaultAsync();
+                    return RedirectToAction(nameof(Index));
+                }
 
-                    if (billing != null && sysconfig != null)
-                    {
-                        int monthNumber = billing.Reading.BillingMonth;  // e.g. 5
-                        int year = billing.Reading.BillingYear;          // e.g. 2025
-                        string period = new DateTime(year, monthNumber, 1).ToString("MMMM yyyy");
-                        string prev = billing.Reading.PreviousReadingValue.ToString("N0");
-                        string curr = billing.Reading.ReadingValue.ToString("N0");
-                        string consumption = billing.Reading.Consumption.ToString("N0");
-                        string dueamount = "Php " + billing.DueAmount.ToString("N2"); ;
-                        string duedate = billing.DueDate.ToString("MMM dd, yyyy");
-                        //string overdueamount = "Php " + billing.DueDate.ToString("MMM dd, yyyy");
+                var sysconfig = await _context.Configurations
+                    .Where(s => s.IsActive)
+                    .FirstOrDefaultAsync();
 
-                        var meterId = billing.Reading.MeterID;
-                        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.MeterID == meterId);
+                if (sysconfig == null)
+                {
+                    await _auditLogger.LogAsync("SMS", $"No active system configuration found when sending SMS alert.", currentUser);
+                    return RedirectToAction(nameof(Index));
+                }
 
-                        if (account == null)
-                        {
-                            TempData["Warning"] = "Unable to send SMS.";
-                            return RedirectToAction(nameof(Index));
-                        }
+                var meterId = billing.Reading.MeterID;
+                var account = await _context.Accounts.FirstOrDefaultAsync(a => a.MeterID == meterId);
 
-                        string phoneNumber = account.ContactNumber;
-                        if (!string.IsNullOrWhiteSpace(phoneNumber))
-                        {
-                            var reader = await _context.Users.FindAsync(billing.Reading.UserID);
-                            string readerName = reader?.FullName ?? User.Identity.Name ?? "N/A";
+                if (account == null)
+                {
+                    TempData["Warning"] = "Unable to send SMS: Account not found.";
+                    await _auditLogger.LogAsync("SMS", $"No account found for Meter ID {meterId} when sending SMS alert.", currentUser);
+                    return RedirectToAction(nameof(Index));
+                }
 
-                            string message = $"Dear Consumer, your Billing details for {period} are now available." +
-                                $" Prev: {prev}. Curr: {curr}. Cons: {consumption}. Due Amount: {dueamount}. Due Date: {duedate}. Please pay on time to avoid penalties. Thank you!";
+                string phoneNumber = account.ContactNumber;
+                if (string.IsNullOrWhiteSpace(phoneNumber))
+                {
+                    await _auditLogger.LogAsync("SMS", $"No contact number found for account linked to Billing # {billing.BillingNumber}", currentUser);
+                    return RedirectToAction(nameof(Index));
+                }
 
-                            bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
+                // Prepare SMS message details
+                int monthNumber = billing.Reading.BillingMonth;
+                int year = billing.Reading.BillingYear;
+                string period = new DateTime(year, monthNumber, 1).ToString("MMMM yyyy");
+                string prev = billing.Reading.PreviousReadingValue.ToString("N0");
+                string curr = billing.Reading.ReadingValue.ToString("N0");
+                string consumption = billing.Reading.Consumption.ToString("N0");
+                string dueAmount = "Php " + billing.DueAmount.ToString("N2");
+                string dueDate = billing.DueDate.ToString("MMM dd, yyyy");
 
-                            if (smsSent)
-                            {
-                                await _auditLogger.LogAsync("SMS", $"SMS alert sent successfully to {phoneNumber} for Billing # {billing.BillingNumber}", currentUser);
-                            }
-                            else
-                            {
-                                await _auditLogger.LogAsync("SMS", $"Failed to send SMS alert to {phoneNumber} for meter ID {billing.BillingNumber}", currentUser);
-                                TempData["Warning"] = "SMS Alert failed to send.";
-                            }
-                        }
-                        else
-                        {
-                            await _auditLogger.LogAsync("SMS", $"No contact number found for account linked to Billing # {billing.BillingNumber}", currentUser);
-                        }
-                    }
-                    else
-                    {
-                        await _auditLogger.LogAsync("SMS", $"No account or active system config found when sending SMS alert.", currentUser);
-                    }
+                var reader = await _context.Users.FindAsync(billing.Reading.UserID);
+                string readerName = reader?.FullName ?? currentUser;
+
+                string message = $"Dear Consumer, your Billing details for {period} are now available." +
+                    $" Prev: {prev}. Curr: {curr}. Cons: {consumption}. Due Amount: {dueAmount}. Due Date: {dueDate}. Please pay on time to avoid penalties. Thank you!";
+
+                bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
+
+                if (smsSent)
+                {
+                    await _auditLogger.LogAsync("SMS", $"SMS alert sent successfully to {phoneNumber} for Billing # {billing.BillingNumber}", currentUser);
+                }
+                else
+                {
+                    await _auditLogger.LogAsync("SMS", $"Failed to send SMS alert to {phoneNumber} for Billing # {billing.BillingNumber}", currentUser);
+                    TempData["Warning"] = "SMS Alert failed to send.";
                 }
 
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                // Optionally log the error
                 TempData["Error"] = "An error occurred while confirming the billing.";
-                // Log to audit or file if needed:
-                await _auditLogger.LogAsync("Billing", $"An error occurred while confirming the billing. {ex.Message}", currentUser);
+                await _auditLogger.LogAsync("Billing", $"Error confirming billing ID {id}: {ex.Message}", currentUser);
                 return RedirectToAction(nameof(Index));
             }
         }
-
-
     }
 }

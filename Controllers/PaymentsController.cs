@@ -303,7 +303,7 @@ namespace SitioSubicIMS.Web.Controllers
             }
 
             string readerName = (await _context.Users.FindAsync(reading.UserID))?.FullName ?? currentUser;
-            string message = $"Dear Consumer, your payment for {period} has been received successfully. Amount Paid: Php {payment.AmountPaid:N2}. Thank you!";
+            string message = $"Dear Consumer, your payment for {period} has been received. Amount Paid: Php {payment.AmountPaid:N2}. Thank you!";
 
             bool smsSent = await _smsService.SendSmsAsync(account.ContactNumber, message, currentUser);
 
