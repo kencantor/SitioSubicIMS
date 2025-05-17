@@ -75,7 +75,7 @@ app.UseAuthorization();   // Enable authorization
 // Default route
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Map Razor Pages for Identity
 app.MapRazorPages();  // Map Razor Pages for Identity-related pages
