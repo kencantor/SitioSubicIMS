@@ -9,8 +9,7 @@ namespace SitioSubicIMS.Web.Controllers
     {
         public IActionResult Index()
         {
-            // Controller logic here
-            return View(); // Ensure the view exists in Views/Dashboard/Index.cshtml
+            return View();
         }
     }
 }
