@@ -6,12 +6,13 @@ namespace SitioSubicIMS.Web.Controllers
     {
         public IActionResult Index()
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity != null && User.Identity.IsAuthenticated && User.Claims.Any(c => c.Type == System.Security.Claims.ClaimTypes.Role))
             {
                 return RedirectToAction("Index", "Dashboard");
             }
 
             return View();
+
         }
     }
 }

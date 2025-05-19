@@ -56,7 +56,7 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                     });
                 }
 
-                ViewBag.AllRoles = _roleManager.Roles.Select(r => r.Name).ToList();
+                ViewBag.AllRoles = _roleManager.Roles.OrderBy(a => a.Name).Select(r => r.Name).ToList();
             }
             catch (Exception ex)
             {
