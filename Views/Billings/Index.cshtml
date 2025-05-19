@@ -16,18 +16,18 @@
 <div class="table-responsive">
     <table id="billingTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
         <thead class="table-dark">
-            <tr>
-                <th>Billing #</th>
+            <tr align="center">
                 <th>Account</th>
-                <th>Prev</th>
-                <th>Curr</th>
+                <th>Period</th>
+                @* <th>Prev</th>
+                <th>Curr</th> *@
                 <th>Cons</th>
+                <th>Due Amount</th>
                 <th>Due Date</th>
-                <th>Penalty</th>
+                @* <th>Penalty</th>
                 <th>VAT</th>
-                <th>Arrears</th>
-                <th>Due Amt</th>
-                <th>Overdue Amt</th>
+                <th>Arrears</th> *@
+                @* <th>Overdue Amt</th> *@
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -39,18 +39,32 @@
                 var account = item.Account;
                 var meter = item.Meter;
 
-                <tr>
-                    <td>@billing.BillingNumber</td>
-                    <td>@account?.AccountName</td>
-                    <td>@billing.Reading.PreviousReadingValue.ToString("N0")</td>
-                    <td>@billing.Reading.ReadingValue.ToString("N0")</td>
+                <tr align="right">
+                    <td align="left">@account?.AccountName</td>
+                    @{
+                        var monthName = new System.Globalization.DateTimeFormatInfo().GetMonthName(billing.Reading.BillingMonth);
+                    }
+                    <td>@monthName @billing.Reading.BillingYear</td>
+                    @* <td>@billing.Reading.PreviousReadingValue.ToString("N0")</td>
+                    <td>@billing.Reading.ReadingValue.ToString("N0")</td> *@
                     <td>@billing.Reading.Consumption.ToString("N0")</td>
+                    <td>
+                        @{
+                            if (billing.DueDate < DateTime.Now && (billing.BillingStatus == BillingStatus.Unpaid || billing.BillingStatus == BillingStatus.Overdue))
+                            {
+                                <b>@billing.OverDueAmount.ToString("N2")</b>
+                            }
+                            else
+                            {
+                                <b>@billing.DueAmount.ToString("N2")</b>
+                            }
+                        }
+                    </td>
                     <td>@billing.DueDate.ToString("yyyy-MM-dd")</td>
-                    <td>@billing.Penalty.ToString("N2")</td>
+                    @*  <td>@billing.Penalty.ToString("N2")</td>
                     <td>@billing.VATAmount.ToString("N2")</td>
-                    <td>@billing.Arrears.ToString("N2")</td>
-                    <td>@billing.DueAmount.ToString("N2")</td>
-                    <td>@billing.OverDueAmount.ToString("N2")</td>
+                    <td>@billing.Arrears.ToString("N2")</td> *@
+                    @* <td>@billing.OverDueAmount.ToString("N2")</td> *@
                     <td>
                         @if (billing.BillingStatus == BillingStatus.Paid)
                         {
@@ -61,7 +75,7 @@
                             <span class="badge bg-warning text-dark">@billing.BillingStatus.ToString()</span>
                         }
                     </td>
-                    <td>
+                    <td align="center">
                         @if (billing.BillingStatus == BillingStatus.Pending)
                         {
                             <button type="button"
@@ -76,7 +90,7 @@
                         <a asp-action="View"
                            asp-route-id="@billing.BillingID"
                            class="btn btn-sm btn-primary"
-                           title="View Billing Details">
+                           title="View Billing Statement">
                             <i class="bi bi-eye"></i>
                         </a>
                     </td>
@@ -96,8 +110,8 @@
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="confirmModalLabel">Confirm Billing</h5>
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-light" id="confirmModalLabel">Confirm Billing</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -107,7 +121,7 @@
                 <form id="confirmForm" method="post" asp-action="Confirm">
                     <input type="hidden" id="billingIdInput" name="id" />
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Yes, Confirm</button>
+                    <button type="submit" class="btn btn-success">Yes, Confirm</button>
                 </form>
 
             </div>

@@ -260,7 +260,8 @@ namespace SitioSubicIMS.Web.Controllers
 
                             string formattedCharge = "Php " + charge.ToString("N2");
                             string message = $"Dear Consumer, here is your reading details: Reading Value - {reading.ReadingValue}. " +
-                                             $"Consumption: {consumption}. Due: {formattedCharge}. Thanks, Field Reader: {readerName}. ";
+                                             $"Consumption: {consumption}. Due: {formattedCharge}. Thanks, Field Reader: {readerName}." +
+                                             $"This is a system generated message. Do not reply.";
 
                             bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
 
@@ -491,15 +492,14 @@ namespace SitioSubicIMS.Web.Controllers
                     MinimumCharge = config.MinimumCharge,
                     PenaltyRate = config.PenaltyRate,
                     VATRate = config.VATRate,
-                    DueDate = DateTime.Now.AddDays(7),
-                    DisconnectionDate = DateTime.Now.AddDays(15),
+                    DueDate = DateTime.Now.AddDays(14),
+                    DisconnectionDate = DateTime.Now.AddDays(21),
                     BillingStatus = BillingStatus.Pending,
                     DateCreated = DateTime.Now,
                     CreatedBy = currentUser,
                     IsActive = true,
                     Arrears = previousArrears
                 };
-
                 _context.Billings.Add(billing);
                 await _auditLogger.LogAsync("Billing", $"Added Billing {billing.BillingNumber}", currentUser);
             }
@@ -521,7 +521,6 @@ namespace SitioSubicIMS.Web.Controllers
                 _context.Billings.Update(existingBilling);
                 await _auditLogger.LogAsync("Billing", $"Updated Billing {existingBilling.BillingNumber}", currentUser);
             }
-
             await _context.SaveChangesAsync();
         }
     }

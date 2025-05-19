@@ -21,8 +21,8 @@
     <table id="paymentTable" class="table table-bordered table-hover align-middle table-sm custom-user-table">
         <thead class="table-dark">
             <tr>
-                <th>Payment #</th>
-                <th>Billing #</th>
+                @* <th>Payment #</th>
+                <th>Billing #</th> *@
                 <th>Account</th>
                 <th>Amount Paid</th>
                 <th>Payment Date</th>
@@ -39,8 +39,8 @@
                 var account = item.Account;
 
                 <tr>
-                    <td>@payment.PaymentNumber</td>
-                    <td>@payment.Billing.BillingNumber</td>
+                    @* <td>@payment.PaymentNumber</td>
+                    <td>@payment.Billing.BillingNumber</td> *@
                     <td>@account?.AccountName</td>
                     <td>@payment.AmountPaid.ToString("N2")</td>
                     <td>@payment.PaymentDate.ToString("yyyy-MM-dd")</td>

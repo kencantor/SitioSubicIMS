@@ -135,7 +135,7 @@ namespace SitioSubicIMS.Web.Controllers
                 string readerName = reader?.FullName ?? currentUser;
 
                 string message = $"Dear Consumer, your Billing details for {period} are now available." +
-                    $" Prev: {prev}. Curr: {curr}. Cons: {consumption}. Due Amount: {dueAmount}. Due Date: {dueDate}. Please pay on time to avoid penalties. Thank you!";
+                    $" Prev: {prev}. Curr: {curr}. Cons: {consumption}. Due Amount: {dueAmount}. Due Date: {dueDate}. Please pay on time to avoid penalties. Thank you!  This is a system generated message. Do not reply.";
 
                 bool smsSent = await _smsService.SendSmsAsync(phoneNumber, message, currentUser);
 

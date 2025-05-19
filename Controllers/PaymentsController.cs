@@ -155,7 +155,7 @@ namespace SitioSubicIMS.Web.Controllers
                 {
                     selectedAccount = accounts.FirstOrDefault(a => a.MeterID == selectedBilling.Reading.MeterID);
                     existingPaymentsTotal = selectedBilling.Payments?.Sum(p => p.AmountPaid) ?? 0;
-                    balance = selectedBilling.DueAmount - existingPaymentsTotal;
+                    balance = (selectedBilling.DueDate > DateTime.Now ? selectedBilling.DueAmount : selectedBilling.OverDueAmount) - existingPaymentsTotal;
                 }
             }
 
@@ -193,7 +193,7 @@ namespace SitioSubicIMS.Web.Controllers
 
             // Get MinimumCharge and possibly other rates from Configurations
             var config = await _context.Configurations.FirstOrDefaultAsync();
-            decimal minimumCharge = config?.MinimumCharge ?? 0m;
+            decimal minimumCharge = config?.MinimumCharge ?? 300m;
             decimal ratePerCubic = config?.PricePerCubicMeter ?? 20m;  // Optional, default to 10
             decimal vatRate = config?.VATRate ?? 0m;          // Optional, default to 12%
 
@@ -204,7 +204,7 @@ namespace SitioSubicIMS.Web.Controllers
                 decimal consumption = billing.Reading.Consumption;
                 decimal rawAmount = Math.Max(consumption * ratePerCubic, minimumCharge);
                 decimal vat = rawAmount * vatRate;
-                totalAmountDue = rawAmount + vat;
+                totalAmountDue = rawAmount + vat + (billing.DueDate < DateTime.Now ? billing.Penalty : 0);
             }
             else
             {
@@ -233,6 +233,8 @@ namespace SitioSubicIMS.Web.Controllers
                 {
                     billing.BillingStatus = BillingStatus.Unpaid;
                 }
+                var currentUser = User.Identity?.Name ?? "System";
+                await SendSmsAlertIfEnabled(payment, currentUser);
             }
             else if (payment.PaymentMethod == PaymentMethod.Check)
             {
@@ -243,7 +245,7 @@ namespace SitioSubicIMS.Web.Controllers
             // Set other payment fields
             payment.PaymentDate = DateTime.Now;
             payment.DateCreated = DateTime.Now;
-            payment.CreatedBy = User.Identity?.Name ?? "self";
+            payment.CreatedBy = User.Identity?.Name ?? "System";
             payment.PaymentNumber = await GeneratePaymentNumberAsync();
 
             _context.Payments.Add(payment);
@@ -303,7 +305,7 @@ namespace SitioSubicIMS.Web.Controllers
             }
 
             string readerName = (await _context.Users.FindAsync(reading.UserID))?.FullName ?? currentUser;
-            string message = $"Dear Consumer, your payment for {period} has been received. Amount Paid: Php {payment.AmountPaid:N2}. Thank you!";
+            string message = $"Dear Consumer, your payment for {period} has been received. Amount Paid: Php {payment.AmountPaid:N2}. Thank you! This is a system generated message. Do not reply.";
 
             bool smsSent = await _smsService.SendSmsAsync(account.ContactNumber, message, currentUser);
 
