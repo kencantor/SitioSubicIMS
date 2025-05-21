@@ -1,0 +1,97 @@
+﻿@model SitioSubicIMS.Web.Models.ViewModels.SystemInfoViewModel
+@{
+    ViewData["Title"] = "System Information";
+}
+
+<div class="container-fluid px-4">
+    <h4 class="mt-4 mb-3"><i class="bi bi-info-circle"></i> System Information</h4>
+
+    <div class="row">
+        <!-- Application Info -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white">
+                    <strong>Application Info</strong>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">App Name</dt>
+                        <dd class="col-sm-7">@Model.ApplicationName</dd>
+
+                        <dt class="col-sm-5">Version</dt>
+                        <dd class="col-sm-7">@Model.Version</dd>
+
+                        <dt class="col-sm-5">Description</dt>
+                        <dd class="col-sm-7">@Model.Description</dd>
+
+                        <dt class="col-sm-5">Deployment Date</dt>
+                        <dd class="col-sm-7">@Model.DeploymentDate.ToString("MMMM dd, yyyy")</dd>
+
+                        <dt class="col-sm-5">Current Server Time</dt>
+                        <dd class="col-sm-7">@Model.ServerTime</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Info -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-secondary text-white">
+                    <strong>Server Info</strong>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Hostname</dt>
+                        <dd class="col-sm-7">@Model.Hostname</dd>
+
+                        <dt class="col-sm-5">IP Address</dt>
+                        <dd class="col-sm-7">@Model.IpAddress</dd>
+
+                        <dt class="col-sm-5">OS</dt>
+                        <dd class="col-sm-7">@Model.OperatingSystem</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Info -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-info text-white">
+                    <strong>Developer Info</strong>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Developer</dt>
+                        <dd class="col-sm-7">@Model.Developer</dd>
+
+                        <dt class="col-sm-5">Contact Email</dt>
+                        <dd class="col-sm-7">@Model.ContactEmail</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Info -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-dark text-white">
+                    <strong>Current Session</strong>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">User</dt>
+                        <dd class="col-sm-7">@Model.CurrentUser</dd>
+
+                        <dt class="col-sm-5">Role</dt>
+                        <dd class="col-sm-7">@Model.UserRole</dd>
+
+                        <dt class="col-sm-5">Login Time</dt>
+                        <dd class="col-sm-7">@Model.LoginTime</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

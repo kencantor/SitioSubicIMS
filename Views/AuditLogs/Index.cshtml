@@ -1,0 +1,160 @@
+﻿@model List<SitioSubicIMS.Web.Models.AuditLog>
+
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<div class="card">
+    <div class="card-header">System Activity Logs</div>
+    <div class="card-body">
+        <div class="d-flex justify-content-end align-items-center mb-3">
+            <div class="input-group" style="width: 250px;">
+                <input id="searchBox" type="text" class="form-control form-control-sm" placeholder="Search audit logs..." />
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle table-sm custom-user-table" id="auditTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th hidden>#</th>
+                        <th>Date / Time</th>
+                        <th>Action Type</th>
+                        <th>Description</th>
+                        <th>Performed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        int count = 1;
+                        foreach (var log in Model)
+                        {
+                            <tr>
+                                <td hidden>@count</td>
+                                <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@log.ActionType</td>
+                                <td>@log.Description</td>
+                                <td>@log.PerformedBy</td>
+                            </tr>
+                            count++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center">No audit log records found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div id="auditPaginationWrapper" class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <small id="auditPaginationInfo" class="text-muted mb-2"></small>
+            <nav>
+                <ul id="auditPagination" class="pagination pagination-sm mb-0"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchBox = document.getElementById('searchBox');
+            const table = document.getElementById('auditTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const pageSize = 10;
+            let currentPage = 1;
+            let filteredRows = rows;
+
+            const recordCount = document.getElementById('auditPaginationInfo');
+            const paginationList = document.getElementById('auditPagination');
+
+            function renderPagination() {
+                const totalPages = Math.ceil(filteredRows.length / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+
+                rows.forEach(row => row.style.display = 'none');
+                filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                            .forEach(row => row.style.display = '');
+
+                paginationList.innerHTML = '';
+
+                if (totalPages === 0) {
+                    recordCount.textContent = 'No audit logs found.';
+                    return;
+                }
+
+                const startItem = (currentPage - 1) * pageSize + 1;
+                const endItem = Math.min(currentPage * pageSize, filteredRows.length);
+                recordCount.textContent = `Showing ${startItem} to ${endItem} of ${filteredRows.length} records`;
+
+                function addPageItem(page, text = null, isActive = false, isDisabled = false) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+                    li.innerHTML = `<a class="page-link" href="#">${text || page}</a>`;
+                    if (!isDisabled) {
+                        li.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            currentPage = page;
+                            renderPagination();
+                        });
+                    }
+                    paginationList.appendChild(li);
+                }
+
+                addPageItem(currentPage - 1, 'Previous', false, currentPage === 1);
+
+                const maxPagesToShow = 5;
+                if (totalPages <= maxPagesToShow + 2) {
+                    for (let i = 1; i <= totalPages; i++) {
+                        addPageItem(i, null, i === currentPage);
+                    }
+                } else {
+                    addPageItem(1, '1', currentPage === 1);
+
+                    if (currentPage > 3) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationList.appendChild(ellipsis);
+                    }
+
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+
+                    for (let i = start; i <= end; i++) {
+                        addPageItem(i, null, i === currentPage);
+                    }
+
+                    if (currentPage < totalPages - 2) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationList.appendChild(ellipsis);
+                    }
+
+                    addPageItem(totalPages, totalPages.toString(), currentPage === totalPages);
+                }
+
+                addPageItem(currentPage + 1, 'Next', false, currentPage === totalPages);
+            }
+
+            function filterRows() {
+                const term = searchBox.value.trim().toLowerCase();
+                filteredRows = rows.filter(r => r.textContent.toLowerCase().includes(term));
+                currentPage = 1;
+                renderPagination();
+            }
+
+            searchBox.addEventListener('input', filterRows);
+            filterRows();
+        });
+    </script>
+}
+

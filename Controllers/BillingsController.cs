@@ -186,7 +186,7 @@ namespace SitioSubicIMS.Web.Controllers
             using (var memoryStream = new MemoryStream())
             {
                 // Set document size to A4
-                var document = new Document(PageSize.A4, 24, 24, 24, 24); // optional set margins
+                var document = new Document(PageSize.A4, 36, 36, 36, 36); // optional set margins
                 var writer = PdfWriter.GetInstance(document, memoryStream);
                 document.Open();
 
@@ -201,6 +201,7 @@ namespace SitioSubicIMS.Web.Controllers
                 var subtitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
                 var labelFont = FontFactory.GetFont(FontFactory.HELVETICA, 10);
                 var valueFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+                var smallFont = FontFactory.GetFont(FontFactory.HELVETICA, 9);
 
                 var title = new Paragraph($"Billing Statement for {billingDate:MMM yyyy}", titleFont)
                 {
@@ -210,7 +211,7 @@ namespace SitioSubicIMS.Web.Controllers
                 document.Add(title);
 
                 // Generated timestamp
-                var generated = new Paragraph($"Generated {DateTime.Now:MMMM dd, yyyy hhmm tt}", labelFont)
+                var generated = new Paragraph($"Generated: {DateTime.Now:MMMM dd, yyyy hh:mm tt}", labelFont)
                 {
                     Alignment = Element.ALIGN_CENTER,
                     SpacingAfter = 10f
@@ -220,9 +221,7 @@ namespace SitioSubicIMS.Web.Controllers
 
                 // Define light gray color
                 BaseColor lightGray = new BaseColor(200, 200, 200);
-                BaseColor lightGreen = new BaseColor(220, 255, 220);
                 BaseColor lightBlue = new BaseColor(224, 242, 255);
-                BaseColor lightRed = new BaseColor(255, 228, 225);
 
 
                 // Helper method to create a cell
@@ -237,14 +236,14 @@ namespace SitioSubicIMS.Web.Controllers
                 }
 
                 // Create Account Details Table
-                float[] tableWidths = new float[] { 15f, 40f, 15f, 40f };
+                float[] tableWidths = new float[] { 15f, 35f, 15f, 35f };
                 PdfPTable accountTable = new PdfPTable(4)
                 {
                     WidthPercentage = 100
                 };
                 accountTable.SetWidths(tableWidths);
                 PdfPCell headerCell = CreateCell("Account Details", subtitleFont, 4);
-                headerCell.BackgroundColor = lightGreen;
+                headerCell.BackgroundColor = lightBlue;
                 accountTable.AddCell(headerCell);
                 accountTable.AddCell(CreateCell("Name", labelFont));
                 accountTable.AddCell(CreateCell(account?.AccountName ?? "-", valueFont));
@@ -308,13 +307,18 @@ namespace SitioSubicIMS.Web.Controllers
                 billingTable.AddCell(CreateCell("Consumption", labelFont));
                 billingTable.AddCell(CreateCell(billing.Reading.Consumption.ToString("N0"), valueFont));
                 billingTable.AddCell(CreateCell("Cons. Amount", labelFont));
-                billingTable.AddCell(CreateCell(billing.BaseAmount.ToString("N2"), valueFont));
+                billingTable.AddCell(CreateCell("Php " + billing.BaseAmount.ToString("N2"), valueFont));
 
                 billingTable.AddCell(CreateCell("Arrears", labelFont));
-                billingTable.AddCell(CreateCell(billing.Arrears.ToString("N2"), valueFont));
+                billingTable.AddCell(CreateCell("Php " + billing.Arrears.ToString("N2"), valueFont));
                 billingTable.AddCell(CreateCell($"VAT({(billing.VATRate * 100)}%)", labelFont));
-                billingTable.AddCell(CreateCell(billing.VATAmount.ToString("N2"), valueFont));
+                billingTable.AddCell(CreateCell("Php " + billing.VATAmount.ToString("N2"), valueFont));
 
+                var currentUser = User.FindFirstValue(ClaimTypes.Name) ?? "System";
+                var reader = await _context.Users.FindAsync(billing.Reading.UserID);
+                string readerName = reader?.FullName ?? currentUser;
+
+                billingTable.AddCell(CreateCell($"Meter Reader: {readerName}", labelFont, 4));
                 PdfPCell totalDueCell = CreateCell("Total Amount Due: Php " + billing.DueAmount.ToString("N2"), subtitleFont, 4);
                 totalDueCell.HorizontalAlignment = Element.ALIGN_RIGHT;
                 billingTable.AddCell(totalDueCell);
@@ -322,7 +326,7 @@ namespace SitioSubicIMS.Web.Controllers
                 document.Add(billingTable);
                 document.Add(new Paragraph("\n"));
 
-                // Create Account Details Table
+                // Create Overdue Details Table
                 PdfPTable overdueTable = new PdfPTable(4)
                 {
                     WidthPercentage = 100
@@ -330,16 +334,54 @@ namespace SitioSubicIMS.Web.Controllers
                 float[] overduewidths = new float[] { 20f, 30f, 20f, 30f };
                 overdueTable.SetWidths(overduewidths);
                 PdfPCell overdueHeaderCell = CreateCell("Overdue Details", subtitleFont, 4);
-                overdueHeaderCell.BackgroundColor = lightRed;
+                overdueHeaderCell.BackgroundColor = lightBlue;
                 overdueTable.AddCell(overdueHeaderCell);
 
                 overdueTable.AddCell(CreateCell($"Penalty({billing.PenaltyRate * 100}%)", labelFont));
                 overdueTable.AddCell(CreateCell("Php " + billing.Penalty.ToString("N2"), valueFont));
                 overdueTable.AddCell(CreateCell("Over Due Amount", labelFont));
                 overdueTable.AddCell(CreateCell("Php " + billing.OverDueAmount.ToString("N2"), subtitleFont));
+                overdueTable.AddCell(CreateCell("Disconnection Date: " + billing.DisconnectionDate?.ToString("MMMM dd, yyyy"), valueFont, 4));
 
                 document.Add(overdueTable);
                 document.Add(new Paragraph("\n"));
+
+                // Create Overdue Details Table
+                PdfPTable rates = new PdfPTable(4)
+                {
+                    WidthPercentage = 100
+                };
+                rates.SetWidths(overduewidths);
+                PdfPCell ratesHeader = CreateCell("Billing Rates Details", valueFont, 4);
+                ratesHeader.BackgroundColor = lightBlue;
+                rates.AddCell(ratesHeader);
+
+                rates.AddCell(CreateCell($"Rate Per Cubic Meter: Php {billing.MinimumCharge:N2}", smallFont, 4));
+                rates.AddCell(CreateCell($"Minimum Consumption: {billing.MinimumConsumption:N0}", smallFont, 4));
+                rates.AddCell(CreateCell($"Basic Charge: Php {billing.MinimumCharge:N2}", smallFont, 4));
+
+                document.Add(rates);
+                document.Add(new Paragraph("\n"));
+
+                // Italic font
+                var italicFont = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9);
+
+                // Payment reminder
+                var dueDateText = $"Please pay on or before {billing.DueDate:MMMM dd, yyyy} to avoid penalties.";
+                document.Add(new Paragraph(dueDateText, italicFont) { SpacingBefore = 10f });
+
+                // Disclaimer
+                var disclaimerText = "This is a system-generated billing statement. Any alteration or unauthorized reproduction is strictly prohibited.";
+                document.Add(new Paragraph(disclaimerText, italicFont) { SpacingBefore = 5f });
+                var noteText = "For inquiries, please send us an email at sitiosubicwaterworks@gmail.com. Thank you!";
+                document.Add(new Paragraph(noteText, italicFont) { SpacingBefore = 5f });
+
+                var endText = "********** END OF BILLING STATEMENT **********";
+                document.Add(new Paragraph(endText, italicFont)
+                {
+                    Alignment = Element.ALIGN_CENTER,
+                    SpacingBefore = 10f
+                });
 
                 document.Close();
 

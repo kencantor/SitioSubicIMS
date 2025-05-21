@@ -5,6 +5,7 @@ using SitioSubicIMS.Web.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using SitioSubicIMS.Web.Services;
 using SitioSubicIMS.Web.Services.Logging;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,18 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Set default culture to Philippines
+var cultureInfo = new CultureInfo("en-PH");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(cultureInfo),
+    SupportedCultures = new List<CultureInfo> { cultureInfo },
+    SupportedUICultures = new List<CultureInfo> { cultureInfo }
+});
 
 // Ensure the authentication and authorization middleware is set correctly
 app.UseAuthentication();  // Enable authentication
