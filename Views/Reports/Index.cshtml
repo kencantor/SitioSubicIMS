@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "Reports Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid py-0">
+    <h4 class="mb-2">Reports Dashboard</h4>
+    <!-- Summary Cards -->
+
+    <div class="card">
+        <div class="card-header"><h5 class="text-secondary">General Summary</h5></div>
+        <div class="card-body">
+            @model SitioSubicIMS.Web.Models.ViewModels.ReportDashboardViewModel
+            <div class="row g-3 mb-2">
+                <div class="col-6 col-sm-6 col-md-6 col-lg-3">
+                    <div class="card shadow-sm" role="button" onclick="openModal('Active Accounts', '@Url.Action("GetActiveAccountsModal", "Reports")')">
+                        <div class="card-body">
+                            <small class="text-muted">Active Accounts</small>
+                            <h5 class="fw-bold text-primary text-end">@Model.TotalAccounts</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-6 col-md-6 col-lg-3">
+                    <div class="card shadow-sm" role="button" onclick="openModal('Unpaid Billings', '@Url.Action("GetUnpaidBillingsModal", "Reports")')">
+                        <div class="card-body">
+                            <small class="text-muted">Unpaid Billings (@Model.UnpaidBillingsCount.ToString("N0"))</small>
+                            <h5 class="fw-bold text-warning text-end">₱@Model.TotalBillings.ToString("N2")</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-6 col-md-6 col-lg-3">
+                    <div class="card shadow-sm" role="button" onclick="openModal('Payments Collected', '@Url.Action("GetPaymentsCollectedModal", "Reports")')">
+                        <div class="card-body">
+                            <small class="text-muted">Payments Collected</small>
+                            <h5 class="fw-bold text-success text-end">₱@Model.TotalPayments.ToString("N2")</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-6 col-md-6 col-lg-3">
+                    <div class="card shadow-sm" role="button" onclick="openModal('Past Dues', '@Url.Action("GetPastDuesModal", "Reports")')">
+                        <div class="card-body">
+                            <small class="text-muted">Past Dues</small>
+                            <h5 class="fw-bold text-danger text-end">@Model.PastDues.ToString("N0")</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modalContainer"></div>
+@section Scripts {
+    <script>
+        function openModal(title, endpointUrl) {
+            $.get(endpointUrl, function (data) {
+                $('#modalContainer').html(data);
+
+                // Set the title dynamically
+                $('#modalContainer .modal-title').text(title);
+
+                // Find the modal element dynamically
+                var modalElement = $('#modalContainer').find('.modal').attr('id');
+                var modal = new bootstrap.Modal(document.getElementById(modalElement));
+
+                modal.show();
+            });
+        }
+    </script>
+}

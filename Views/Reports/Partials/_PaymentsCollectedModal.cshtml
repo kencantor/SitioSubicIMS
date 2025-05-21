@@ -1,0 +1,43 @@
+﻿@model IEnumerable<SitioSubicIMS.Web.Models.ViewModels.PaymentsCollectedViewModel>
+
+<div class="modal fade" id="paymentsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">Payments Collected</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if (!Model.Any())
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-info-circle fs-4"></i>
+                        <p class="mt-2 mb-0">No payments collected to display.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-2">
+                        @foreach (var item in Model)
+                        {
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="card border shadow-sm h-100">
+                                    <div class="card-body small">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-dark">Account: @item.AccountName</strong>
+                                            <span class="badge bg-success">Payment #: @item.PaymentNumber</span>
+                                        </div>
+                                        <div><strong>Amount Paid:</strong> ₱@item.AmountPaid.ToString("N2")</div>
+                                        <div><strong>Date:</strong> @item.PaymentDate.ToString("MMM dd, yyyy")</div>
+                                        <div><strong>Method:</strong> @item.PaymentMethod</div>
+                                        <div><strong>For Billing #:</strong> @item.BillingNumber</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
