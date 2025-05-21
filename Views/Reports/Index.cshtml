@@ -5,7 +5,6 @@
 <div class="container-fluid py-0">
     <h4 class="mb-2">Reports Dashboard</h4>
     <!-- Summary Cards -->
-
     <div class="card">
         <div class="card-header"><h5 class="text-secondary">General Summary</h5></div>
         <div class="card-body">
@@ -46,9 +45,113 @@
             </div>
         </div>
     </div>
+    <div class="card mt-4">
+        <div class="card-header"><h5 class="text-secondary">Exportable Lists</h5></div>
+        <div class="card-body">
+            <div class="card mt-2">
+                <div class="card-header"><label class="text-secondary">List of Accounts</label></div>
+                <div class="card-body">
+                    <a href="@Url.Action("PrintAccountsList", "Reports")" target="_blank" class="btn btn-outline-primary">
+                        Print Accounts List (PDF)
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <div class="card-header"><label class="text-secondary">Period Lists</label></div>
+                <div class="card-body">
+                    <form asp-controller="Reports" method="get" target="_blank" class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label for="billingPeriod" class="form-label">Select Billing Period</label>
+                            <input type="month" id="billingPeriod" name="billingPeriod" class="form-control" required />
+                        </div>
+                        <div class="col-auto mt-2">
+                            <button type="submit" asp-action="PrintMonthlyBillingList" asp-controller="Reports" class="btn btn-outline-primary">
+                                Print Monthly Billing List (PDF)
+                            </button>
+                        </div>
+                        <div class="col-auto mt-2">
+                            <button type="submit" asp-action="PrintPaymentList" asp-controller="Reports" class="btn btn-outline-primary">
+                                Print Payment List (PDF)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header"><h5 class="text-secondary">Monthly Billing & Payments (Last 6 Months)</h5></div>
+        <div class="card-body">
+            <canvas id="billingChart" height="100"></canvas>
+        </div>
+    </div>
 </div>
 <div id="modalContainer"></div>
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('billingChart').getContext('2d');
+
+        const billingChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ChartLabels)),
+                datasets: [
+                    {
+                        label: 'Billings',
+                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.MonthlyBillings)),
+                        borderColor: 'rgba(0, 123, 255, 1)', // Bootstrap primary blue
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                    },
+                    {
+                        label: 'Payments Collected',
+                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.MonthlyPayments)),
+                        borderColor: 'rgba(40, 167, 69, 1)', // Bootstrap success green
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ₱';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
     <script>
         function openModal(title, endpointUrl) {
             $.get(endpointUrl, function (data) {
