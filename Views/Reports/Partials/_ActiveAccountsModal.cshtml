@@ -1,42 +1,39 @@
 ﻿@model IEnumerable<SitioSubicIMS.Web.Models.Account>
+
 <div class="modal fade" id="activeAccountsModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+        <div class="modal-content rounded-3 shadow">
             <div class="modal-header">
                 <h5 class="modal-title">Active Accounts</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered table-sm table-striped">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Account Name</th>
-                            <th>Account Number</th>
-                            <th>Meter Number</th>
-                            <th>Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.Any())
+                <div class="row g-3">
+                    @if (!Model.Any())
+                    {
+                        <div class="col-12 text-center text-muted">
+                            No data to display.
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var account in Model)
                         {
-                            <tr>
-                                <td colspan="4" class="text-center text-muted">No data to display.</td>
-                            </tr>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="card h-100 border border-secondary shadow-sm">
+                                    <div class="card-header bg-primary text-light">
+                                        @account.AccountName
+                                    </div>
+                                    <div class="card-body small">
+                                        <div><strong>Account Number:</strong> @account.AccountNumber</div>
+                                        <div><strong>Meter Number:</strong> @account.Meter.MeterNumber</div>
+                                        <div><strong>Address:</strong> @account.Address</div>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                        else
-                        {
-                            foreach (var account in Model)
-                            {
-                                <tr>
-                                    <td>@account.AccountName</td>
-                                    <td>@account.AccountNumber</td>
-                                    <td>@account.Meter.MeterNumber</td>
-                                    <td>@account.Address</td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
+                    }
+                </div>
             </div>
         </div>
     </div>
