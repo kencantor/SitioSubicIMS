@@ -1,0 +1,27 @@
+﻿@model SitioSubicIMS.Web.Models.Reading
+@if (Model != null)
+{
+    <div class="container mt-4">
+        <h6>Previous Reading Details</h6>
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>Reading Date</th>
+                    <th>Reading Value</th>
+                    <th>Billing Period</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@Model.ReadingDate.ToString("yyyy-MM-dd")</td>
+                    <td>@Model.ReadingValue</td>
+                    <td>@($"{System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(Model.BillingMonth)} {Model.BillingYear}")</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info mt-3">No previous reading found for this meter.</div>
+}

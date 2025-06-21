@@ -18,12 +18,12 @@ namespace SitioSubicIMS.Web.Models
         public string SerialNumber { get; set; }
 
         [StringLength(100, ErrorMessage = "Make cannot exceed 100 characters.")]
-        public string Make { get; set; }
+        public string Make { get; set; } = "N/A";
 
         [Required(ErrorMessage = "First Value is required.")]
         [Range(0, long.MaxValue, ErrorMessage = "First Value must be zero or positive.")]
         [Display(Name = "Initial Reading")]
-        public long FirstValue { get; set; }
+        public long FirstValue { get; set; } = 0;
 
         [Display(Name = "Date Created")]
         public DateTime DateCreated { get; set; } = DateTime.Now;

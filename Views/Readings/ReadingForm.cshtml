@@ -16,7 +16,7 @@
         <!-- Meter Dropdown -->
         <div class="col-md-6 col-lg-4">
             <div class="form-floating">
-                <select asp-for="MeterID" class="form-select" asp-items="@(ViewBag.Meters as List<SelectListItem>)" id="MeterID">
+                <select asp-for="MeterID" class="form-select" asp-items="@(ViewBag.Meters as List<SelectListItem>)" id="MeterID" disabled="@(isEdit ? "disabled" : null)">
                     <option value="">-- Select Meter --</option>
                 </select>
                 <label asp-for="MeterID">Meter</label>
@@ -24,29 +24,29 @@
             </div>
         </div>
 
+        <!-- Reading Value -->
+        <div class="col-md-6 col-lg-2">
+            <div class="form-floating">
+                <input asp-for="ReadingValue" type="number" step="any" class="form-control" placeholder="Meter Value" id="ReadingValue" />
+                <label asp-for="ReadingValue">Meter Value</label>
+                <span asp-validation-for="ReadingValue" class="text-danger"></span>
+            </div>
+        </div>
+
         <!-- Reading Date -->
         <div class="col-md-6 col-lg-2">
             <div class="form-floating">
                 <input asp-for="ReadingDate" type="date" class="form-control"
-                       value="@(isEdit ? Model.ReadingDate.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))" id="ReadingDate" />
+                       value="@(isEdit ? Model.ReadingDate.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd"))" id="ReadingDate" readonly />
                 <label asp-for="ReadingDate">Reading Date</label>
                 <span asp-validation-for="ReadingDate" class="text-danger"></span>
-            </div>
-        </div>
-
-        <!-- Reading Value -->
-        <div class="col-md-6 col-lg-2">
-            <div class="form-floating">
-                <input asp-for="ReadingValue" type="number" step="any" class="form-control" placeholder="Reading Value" id="ReadingValue" />
-                <label asp-for="ReadingValue">Reading Value</label>
-                <span asp-validation-for="ReadingValue" class="text-danger"></span>
             </div>
         </div>
 
         <!-- Billing Month -->
         <div class="col-md-3 col-lg-2">
             <div class="form-floating">
-                <select asp-for="BillingMonth" class="form-select" id="BillingMonth">
+                <select class="form-select" id="BillingMonth" disabled>
                     <option value="">-- Month --</option>
                     @{
                         var months = System.Globalization.DateTimeFormatInfo.InvariantInfo.MonthNames;
@@ -60,6 +60,9 @@
                         }
                     }
                 </select>
+
+                <!-- Hidden input to pass the selected month to the backend -->
+                <input type="hidden" name="BillingMonth" value="@(isEdit ? Model.BillingMonth : currentMonth)" />
                 <label asp-for="BillingMonth">Billing Month</label>
                 <span asp-validation-for="BillingMonth" class="text-danger"></span>
             </div>
@@ -68,7 +71,7 @@
         <!-- Billing Year -->
         <div class="col-md-3 col-lg-2">
             <div class="form-floating">
-                <select asp-for="BillingYear" class="form-select" id="BillingYear">
+                <select class="form-select" id="BillingYear" disabled>
                     <option value="">-- Year --</option>
                     @{
                         for (int year = 2000; year <= 2100; year++)
@@ -81,12 +84,16 @@
                         }
                     }
                 </select>
+
+                <!-- Hidden input for backend submission -->
+                <input type="hidden" name="BillingYear" value="@(isEdit ? Model.BillingYear : currentYear)" />
+
                 <label asp-for="BillingYear">Billing Year</label>
                 <span asp-validation-for="BillingYear" class="text-danger"></span>
             </div>
         </div>
     </div>
-
+    <div id="latestReadingContainer" class="col-12"></div>
     <div class="mt-4">
         <button type="button" class="btn btn-primary" id="btnConfirmReading">@ViewData["Title"]</button>
         <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
@@ -143,5 +150,45 @@
         document.getElementById("modalSubmit").addEventListener("click", function () {
             document.getElementById("readingForm").submit();
         });
+
+        document.getElementById("MeterID").addEventListener("change", function () {
+            const meterId = this.value;
+            if (!meterId) return;
+
+            // Fetch billing info
+            fetch(`/Readings/GetNextBillingDate?meterId=${meterId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const { billingMonth, billingYear } = data;
+
+                    // Update hidden inputs
+                    document.querySelector("input[name='BillingMonth']").value = billingMonth;
+                    document.querySelector("input[name='BillingYear']").value = billingYear;
+
+                    // Update selects
+                    const monthSelect = document.getElementById("BillingMonth");
+                    const yearSelect = document.getElementById("BillingYear");
+
+                    if (monthSelect) {
+                        for (let opt of monthSelect.options) {
+                            opt.selected = opt.value == billingMonth;
+                        }
+                    }
+
+                    if (yearSelect) {
+                        for (let opt of yearSelect.options) {
+                            opt.selected = opt.value == billingYear;
+                        }
+                    }
+                });
+
+            // Fetch and render latest reading
+            fetch(`/Readings/GetLatestReading?meterId=${meterId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("latestReadingContainer").innerHTML = html;
+                });
+        });
+
     </script>
 }

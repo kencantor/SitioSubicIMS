@@ -21,14 +21,12 @@ namespace SitioSubicIMS.Web.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogger _auditLogger;
         private readonly ISmsService _smsService;
-
         public ReadingsController(ApplicationDbContext context, IAuditLogger auditLogger, ISmsService smsService)
         {
             _context = context;
             _auditLogger = auditLogger;
             _smsService = smsService;
         }
-
         // Helper method to populate ViewBag.Meters with SelectListItems (MeterNumber + AccountName)
         private void PopulateMetersViewBag()
         {
@@ -50,7 +48,6 @@ namespace SitioSubicIMS.Web.Controllers
                 Text = m.DisplayName
             }).OrderBy(m => m.Text).ToList();
         }
-
         // GET: List all active readings
         public async Task<IActionResult> Index()
         {
@@ -121,7 +118,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return View(readingList);
         }
-
         // GET: Create form
         [HttpGet]
         public IActionResult Create()
@@ -130,7 +126,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return View("ReadingForm", new Reading());
         }
-
         // GET: Edit form
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -147,7 +142,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return View("ReadingForm", reading);
         }
-
         // POST: Save (Create/Edit)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -298,8 +292,6 @@ namespace SitioSubicIMS.Web.Controllers
                 return View("ReadingForm", reading);
             }
         }
-
-
         // POST: Soft delete reading
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -410,7 +402,6 @@ namespace SitioSubicIMS.Web.Controllers
             errorMessage = string.Empty;
             return true;
         }
-
         private async Task<string> GenerateBillingNumberAsync()
         {
             // Format: B + MM + yy + 5-digit zero-padded sequence (e.g. B05252400001)
@@ -522,6 +513,45 @@ namespace SitioSubicIMS.Web.Controllers
                 await _auditLogger.LogAsync("Billing", $"Updated Billing {existingBilling.BillingNumber}", currentUser);
             }
             await _context.SaveChangesAsync();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNextBillingDate(int meterId)
+        {
+            var latestReading = await _context.Readings
+                .Where(r => r.MeterID == meterId && r.IsActive)
+                .OrderByDescending(r => r.BillingYear)
+                .ThenByDescending(r => r.BillingMonth)
+                .FirstOrDefaultAsync();
+
+            int nextMonth, nextYear;
+
+            if (latestReading != null)
+            {
+                var current = new DateTime(latestReading.BillingYear, latestReading.BillingMonth, 1);
+                var next = current.AddMonths(1);
+                nextMonth = next.Month;
+                nextYear = next.Year;
+            }
+            else
+            {
+                var now = DateTime.Now;
+                nextMonth = now.Month;
+                nextYear = now.Year;
+            }
+
+            return Json(new { billingMonth = nextMonth, billingYear = nextYear });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLatestReading(int meterId)
+        {
+            var reading = await _context.Readings
+                .Where(r => r.MeterID == meterId && r.IsActive)
+                .OrderByDescending(r => r.ReadingDate)
+                .FirstOrDefaultAsync();
+
+            return PartialView("_LatestReadingPartial", reading);
         }
     }
 }

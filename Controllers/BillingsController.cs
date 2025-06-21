@@ -173,8 +173,20 @@ namespace SitioSubicIMS.Web.Controllers
             {
                 return NotFound();
             }
+
             // Get MeterID from billing
             var meterId = billing.Reading?.Meter?.MeterID;
+
+            var previousBillings = await _context.Billings
+                .Include(b => b.Reading)
+                .Where(b =>
+                b.IsActive &&
+                b.Reading.MeterID == meterId &&
+                b.BillingID != billing.BillingID)
+                .OrderByDescending(b => b.BillingDate)
+                .Take(5)
+                .ToListAsync();
+
 
             Account account = null;
             if (meterId != null)
@@ -254,7 +266,7 @@ namespace SitioSubicIMS.Web.Controllers
                 accountTable.AddCell(CreateCell("Contact No.", labelFont));
                 accountTable.AddCell(CreateCell(account?.ContactNumber ?? "-", valueFont));
                 accountTable.AddCell(CreateCell("Address", labelFont));
-                accountTable.AddCell(CreateCell(account?.Address ?? "-", valueFont, 3));
+                accountTable.AddCell(CreateCell(account?.Address + " Sitio Subic, Brgy. Balele Tanauan City, Batangas" ?? "-", valueFont, 3));
                 document.Add(accountTable);
                 document.Add(new Paragraph("\n")); // Optional spacer
 
@@ -362,6 +374,38 @@ namespace SitioSubicIMS.Web.Controllers
 
                 document.Add(rates);
                 document.Add(new Paragraph("\n"));
+
+                if (previousBillings.Any())
+                {
+                    PdfPTable historyTable = new PdfPTable(5)
+                    {
+                        WidthPercentage = 100
+                    };
+                    historyTable.SetWidths(new float[] { 20f, 20f, 20f, 20f, 20f });
+
+                    PdfPCell historyHeader = CreateCell("Previous Billing Records", valueFont, 5);
+                    historyHeader.BackgroundColor = lightBlue;
+                    historyTable.AddCell(historyHeader);
+
+                    // Table Headers
+                    historyTable.AddCell(CreateCell("Billing No.", labelFont));
+                    historyTable.AddCell(CreateCell("Period", labelFont));
+                    historyTable.AddCell(CreateCell("Consumption", labelFont));
+                    historyTable.AddCell(CreateCell("Due Amount", labelFont));
+                    historyTable.AddCell(CreateCell("Status", labelFont));
+
+                    foreach (var item in previousBillings)
+                    {
+                        historyTable.AddCell(CreateCell(item.BillingNumber, smallFont));
+                        historyTable.AddCell(CreateCell(item.BillingDate.ToString("MMMM yyyy"), smallFont));
+                        historyTable.AddCell(CreateCell(item.Reading?.Consumption.ToString("N0") ?? "-", smallFont));
+                        historyTable.AddCell(CreateCell("Php " + item.DueAmount.ToString("N2"), smallFont));
+                        historyTable.AddCell(CreateCell(item.BillingStatus.ToString(), smallFont));
+                    }
+
+                    document.Add(historyTable);
+                    document.Add(new Paragraph("\n"));
+                }
 
                 // Italic font
                 var italicFont = FontFactory.GetFont(FontFactory.HELVETICA_OBLIQUE, 9);

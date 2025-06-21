@@ -18,14 +18,12 @@ namespace SitioSubicIMS.Web.Controllers.Admin
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IAuditLogger _auditLogger;
-
         public SystemUsersController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IAuditLogger auditLogger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _auditLogger = auditLogger;
         }
-
         public async Task<IActionResult> Index()
         {
             var userViewModels = new List<UserViewModel>();
@@ -66,7 +64,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
 
             return View(userViewModels);
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleLock(string id)
@@ -103,7 +100,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
 
             return RedirectToAction("Index");
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(string id)
@@ -140,7 +136,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
 
             return RedirectToAction("Index");
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRole(string userId, string newRole)
@@ -190,7 +185,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
 
             return RedirectToAction("Index");
         }
-
         // Helper Methods
         private async Task<string> GetFullName(string id)
         {
@@ -204,7 +198,6 @@ namespace SitioSubicIMS.Web.Controllers.Admin
                 LastName = user.LastName
             }.FullName;
         }
-
         private bool IsProtectedUser(ApplicationUser user)
         {
             return user.UserName == "admin@sitiosubicims.local" ||

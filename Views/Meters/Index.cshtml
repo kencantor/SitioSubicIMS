@@ -19,8 +19,8 @@
             <tr>
                 <th>Meter #</th>
                 <th>Serial #</th>
-                <th>Make</th>
-                <th>First Value</th>
+                @* <th>Make</th> *@
+                @* <th>First Value</th> *@
                 <th>Date Created</th>
                 <th>Status</th>
                 <th>Actions</th>  <!-- New Actions column -->
@@ -32,8 +32,8 @@
                 <tr class="meter-row @(meter.IsActive ? "" : "table-secondary")" data-meter-id="@meter.MeterID" data-meter-number="@meter.MeterNumber">
                     <td>@meter.MeterNumber</td>
                     <td>@meter.SerialNumber</td>
-                    <td>@meter.Make</td>
-                    <td>@meter.FirstValue</td>
+                    @* <td>@meter.Make</td> *@
+                    @* <td>@meter.FirstValue</td> *@
                     <td>@meter.DateCreated.ToString("yyyy-MM-dd")</td>
                     <td>
                         @if (meter.IsActive)

@@ -16,14 +16,12 @@ namespace SitioSubicIMS.Web.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IAuditLogger _auditLogger;
         private readonly ISmsService _smsService;
-
         public PaymentsController(ApplicationDbContext context, IAuditLogger auditLogger, ISmsService smsService)
         {
             _context = context;
             _auditLogger = auditLogger;
             _smsService = smsService;
         }
-
         public async Task<IActionResult> Index()
         {
             var payments = await _context.Payments
@@ -41,7 +39,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return View(payments);
         }
-
         [HttpPost]
         public async Task<IActionResult> Confirm(int id)
         {
@@ -174,7 +171,6 @@ namespace SitioSubicIMS.Web.Controllers
                 }
             });
         }
-
         [HttpPost]
         public async Task<IActionResult> SubmitPayment(PaymentFormViewModel model)
         {
@@ -256,8 +252,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return RedirectToAction("PaymentForm", new { billingId = payment.BillingID });
         }
-
-
         private async Task<string> GeneratePaymentNumberAsync()
         {
             var now = DateTime.Now;
@@ -279,7 +273,6 @@ namespace SitioSubicIMS.Web.Controllers
 
             return prefix + nextSeq.ToString("D5");
         }
-
         private async Task SendSmsAlertIfEnabled(Payment payment, string currentUser)
         {
             var config = await _context.SMSAlerts

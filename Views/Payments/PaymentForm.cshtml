@@ -44,11 +44,14 @@
 
                 <div class="mb-3">
                     <label asp-for="NewPayment.AmountPaid" class="form-label">Amount to Pay:</label>
-                    <input asp-for="NewPayment.AmountPaid" id="amountPaid" type="number" step="0.01" min="0.01" class="form-control" required />
+                    <input asp-for="NewPayment.AmountPaid" id="amountPaid" type="number" step="0.01" min="0.01" class="form-control" required
+                           value="@Model.NewPayment.AmountPaid.ToString("F2")" />
+
                     <button type="button" class="btn btn-sm btn-outline-primary mt-2"
-                            onclick="document.getElementById('amountPaid').value='@Model.Balance'">
+                            onclick="document.getElementById('amountPaid').value='@Model.Balance.ToString("F2")'">
                         Pay Full Balance
                     </button>
+
                 </div>
 
                 <div class="mb-3">
