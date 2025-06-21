@@ -266,7 +266,7 @@ namespace SitioSubicIMS.Web.Controllers
                 accountTable.AddCell(CreateCell("Contact No.", labelFont));
                 accountTable.AddCell(CreateCell(account?.ContactNumber ?? "-", valueFont));
                 accountTable.AddCell(CreateCell("Address", labelFont));
-                accountTable.AddCell(CreateCell(account?.Address + " Sitio Subic, Brgy. Balele Tanauan City, Batangas" ?? "-", valueFont, 3));
+                accountTable.AddCell(CreateCell(account?.Address + ", Zone 4, Sitio Subic, Brgy. Balele Tanauan City, Batangas" ?? "-", valueFont, 3));
                 document.Add(accountTable);
                 document.Add(new Paragraph("\n")); // Optional spacer
 
