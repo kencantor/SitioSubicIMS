@@ -8,14 +8,117 @@
         Manage water billings, payments, consumer information and reports – all in one place.
     </p>
 
-    <a href="/Identity/Account/Login" class="btn btn-primary btn-lg mt-4">Login to IMS</a>
+    <a href="/Identity/Account/Login" class="btn btn-outline-primary btn-lg mt-4">Login to IMS</a>
+    <a href="#" class="btn btn-outline-success btn-lg mt-4" data-bs-toggle="modal" data-bs-target="#accountLookupModal">View My Account</a>
 </div>
+<div class="modal fade" id="accountLookupModal" tabindex="-1" aria-labelledby="accountLookupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="accountLookupLabel">Check Account Summary</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <label for="accountNumberInput" class="form-label fw-semibold">Enter Account Number</label>
+                    <div class="input-group">
+                        <input type="text" id="accountNumberInput" class="form-control" placeholder="e.g., ACCT-0001" />
+                        <button class="btn btn-outline-primary" type="button" onclick="lookupAccount()">Search</button>
+                    </div>
+                </div>
 
+                <div id="accountSummarySection" style="display:none;">
+                    <h5 class="text-primary border-bottom pb-2">Basic Information</h5>
+                    <div id="basicInfo" class="mb-4"></div>
+
+                    <h5 class="text-primary border-bottom pb-2">Billing History</h5>
+                    <div id="billingHistory" class="scrollable-table mb-4"></div>
+
+                    <h5 class="text-primary border-bottom pb-2">Payment History</h5>
+                    <div id="paymentHistory" class="scrollable-table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <style>
     body {
         background-color: #f8f9fa;
     }
+
     .container {
         max-width: 800px;
     }
+
+    .scrollable-table {
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        padding: 0.5rem;
+    }
+
+    table.table {
+        font-size: 0.9rem;
+        border-collapse: collapse;
+    }
+
+    table thead th {
+        background-color: #f1f3f5;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .table td, .table th {
+        vertical-align: middle;
+    }
 </style>
+<script>
+    function lookupAccount() {
+      const accNo = document.getElementById('accountNumberInput').value;
+      if (!accNo) return;
+
+        fetch(`/Home/GetAccountSummary?accountNumber=${accNo}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.accountName) {
+        alert("Account not found.");
+        return;
+      }
+
+      document.getElementById("accountSummarySection").style.display = 'block';
+
+      // Populate basic info
+      document.getElementById("basicInfo").innerHTML = `
+        <p><strong>Name:</strong> ${data.accountName}</p>
+        <p><strong>Contact:</strong> ${data.contactNumber}</p>
+        <p><strong>Address:</strong> ${data.address}</p>
+        <p><strong>Meter No:</strong> ${data.meterNumber}</p>
+      `;
+
+      document.getElementById("billingHistory").innerHTML = generateTable(data.billings, ["billingNumber", "billingDate", "baseAmount", "dueAmount", "billingStatus"]);
+      document.getElementById("paymentHistory").innerHTML = generateTable(data.payments, ["paymentNumber", "paymentDate", "amountPaid", "paymentMethod"]);
+    });
+    }
+    function generateTable(data, columns) {
+      if (!data || data.length === 0) return "<p>No records found.</p>";
+
+      const headers = columns.map(c => `<th>${c.charAt(0).toUpperCase() + c.slice(1)}</th>`).join("") + `<th>Action</th>`;
+
+      const rows = data.map(row => {
+        const rowHtml = columns.map(col => `<td>${row[col]}</td>`).join("");
+        const printButton = `<td><a href="/Home/ViewBillingStatement?id=${row.billingID}" target="_blank" class="btn btn-sm btn-outline-secondary">Print</a></td>`;
+        return `<tr>${rowHtml}${printButton}</tr>`;
+      }).join("");
+
+      return `<table class="table table-bordered"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+</script>
+
